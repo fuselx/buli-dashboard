@@ -167,6 +167,18 @@ def matchdays():
     md['Zuschauer'] = md['Zuschauer'].astype('int')
     md = md.replace(0, "")
     return md
+
+#%% Import der Bilder, als Objekt speichern
+@st.cache_data
+def images():
+    directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
+    images = {}
+    for index, row in df.iterrows():
+        image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
+        image_path = directory + image_name
+        img = Image.open(requests.get(image_path, stream=True).raw).convert("RGB")
+        images[image_name] = img
+    return images
 #%% Funktion für Scatter Plots
 @st.cache_data
 def scatter(df,var1,var2,title = None ,xlab = None, ylab = None,pergame = None):
@@ -195,9 +207,7 @@ def scatter(df,var1,var2,title = None ,xlab = None, ylab = None,pergame = None):
     plt.scatter(df_copy[var1],df_copy[var2])
     for index, row in df_copy.iterrows():
         image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
-        image_path = directory + image_name
-        img = Image.open(requests.get(image_path, stream=True).raw).convert("RGB")
-        imagebox = OffsetImage(img, zoom=0.7)  # Erstellt eine Imagebox mit dem Logo und definierter Größe
+        imagebox = OffsetImage(images[image_name], zoom=0.7)  # Erstellt eine Imagebox mit dem Logo und definierter Größe
         ab = AnnotationBbox(imagebox, (row[var1], row[var2]), frameon=False)
         plt.gca().add_artist(ab)
 
@@ -247,9 +257,7 @@ def hbar(df,var,title = None,pergame = False):
         plt.text(v-(max(sort_df[var])*0.05),i-0.08,str(v),ha='center',va='center',fontsize=9.1,color="0.1")
     for index, row in sort_df.iterrows():
         image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
-        image_path = directory + image_name
-        img = Image.open(requests.get(image_path, stream=True).raw).convert("RGB")
-        imagebox = OffsetImage(img, zoom = 0.5)
+        imagebox = OffsetImage(images[image_name], zoom = 0.5)
         ab = AnnotationBbox(imagebox, (row[var]+max(sort_df[var])*0.035,row['Squad']),frameon=False)
         plt.gca().add_artist(ab)
     if title == None:
@@ -400,6 +408,8 @@ lastmd = lastmd[['Spieltag','Tag','Datum','Anstoß','Heim','Ergebnis','Auswärts
 nextmd = md[md['Spieltag'] == df.loc[0,"MP"] + 1]
 nextmd = nextmd[['Spieltag','Tag','Datum','Anstoß','Heim','Ergebnis','Auswärts']]
 
+# Bilder laden
+images = images()
 #%% Hier fängt das Dashboard an
 st.title("Zweitliga-Dashboard")
 tab1,tab2 = st.tabs(["Mannschaften","Spieler"])
@@ -517,5 +527,3 @@ with tab1:
                 st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)
     with tab3:
         st.text("in Arbeit")
-        
-
