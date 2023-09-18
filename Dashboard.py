@@ -1,16 +1,14 @@
 import pandas as pd
-import os
 import matplotlib.pyplot  as plt
 import numpy as np
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import streamlit as st
 import plotly.express as px
+from PIL import Image
+import requests
 
 
-# Nextcloud path für jeden PC abrufen.
-nextcloud_path = os.environ.get("NEXTCLOUD_PATH")
-output_directory = nextcloud_path
-
+directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
 # layout 
 st.set_page_config(layout="wide")
 #%% Tabellen einlesen
@@ -197,14 +195,12 @@ def scatter(df,var1,var2,title = None ,xlab = None, ylab = None,pergame = None):
     plt.scatter(df_copy[var1],df_copy[var2])
     for index, row in df_copy.iterrows():
         image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
-        image_path = os.path.join(output_directory, image_name)  # checkt, ob im Ordner eine Datei mit dem Namen ist
-        if os.path.exists(image_path):      # Wenn das der Fall ist
-            img = plt.imread(image_path)    # wird das Logo eingelesen
-            imagebox = OffsetImage(img, zoom=0.7)  # Erstellt eine Imagebox mit dem Logo und definierter Größe
-            ab = AnnotationBbox(imagebox, (row[var1], row[var2]), frameon=False)
-            plt.gca().add_artist(ab)
-        else:                                               # Wenn nicht 
-            print(f"Image not found for {row['Squad']}")    # dann Fehlermeldung
+        image_path = directory + image_name
+        img = Image.open(requests.get(image_path, stream=True).raw).convert("RGB")
+        imagebox = OffsetImage(img, zoom=0.7)  # Erstellt eine Imagebox mit dem Logo und definierter Größe
+        ab = AnnotationBbox(imagebox, (row[var1], row[var2]), frameon=False)
+        plt.gca().add_artist(ab)
+
     plt.axvline(x=np.mean(df_copy[var1]),linewidth = 0.5, linestyle = "--",color = "0.5")        
     plt.axhline(y=np.mean(df_copy[var2]),linewidth = 0.5, linestyle = "--",color = "0.5")
     if title == None:
@@ -250,9 +246,9 @@ def hbar(df,var,title = None,pergame = False):
     for i,v in enumerate(sort_df[var]):
         plt.text(v-(max(sort_df[var])*0.05),i-0.08,str(v),ha='center',va='center',fontsize=9.1,color="0.1")
     for index, row in sort_df.iterrows():
-        image_name = row["Squad"]+ ".png"
-        image_path = os.path.join(output_directory,image_name)
-        img = plt.imread(image_path)
+        image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
+        image_path = directory + image_name
+        img = Image.open(requests.get(image_path, stream=True).raw).convert("RGB")
         imagebox = OffsetImage(img, zoom = 0.5)
         ab = AnnotationBbox(imagebox, (row[var]+max(sort_df[var])*0.035,row['Squad']),frameon=False)
         plt.gca().add_artist(ab)
