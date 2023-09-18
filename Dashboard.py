@@ -6,7 +6,7 @@ import streamlit as st
 import plotly.express as px
 from PIL import Image
 import requests
-
+import io
 
 directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
 # layout 
@@ -176,7 +176,8 @@ def images():
     for index, row in df.iterrows():
         image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
         image_path = directory + image_name
-        img = Image.open(requests.get(image_path, stream=True).raw).convert("RGB")
+        response = requests.get(image_path, stream=True)
+        img = Image.open(io.BytesIO(response.content)).convert("RGBA")
         images[image_name] = img
     return images
 #%% Funktion für Scatter Plots
@@ -203,11 +204,11 @@ def scatter(df,var1,var2,title = None ,xlab = None, ylab = None,pergame = None):
     if pergame == "xy":
         df_copy[var1] = df_copy[var1].div(df_copy['MP']).round(2)
         df_copy[var2] = df_copy[var2].div(df_copy['MP']).round(2)
-    fig = plt.figure(dpi = 600)
+    fig = plt.figure()
     plt.scatter(df_copy[var1],df_copy[var2])
     for index, row in df_copy.iterrows():
         image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
-        imagebox = OffsetImage(images[image_name], zoom=0.7)  # Erstellt eine Imagebox mit dem Logo und definierter Größe
+        imagebox = OffsetImage(images[image_name], zoom=0.3)
         ab = AnnotationBbox(imagebox, (row[var1], row[var2]), frameon=False)
         plt.gca().add_artist(ab)
 
@@ -257,7 +258,7 @@ def hbar(df,var,title = None,pergame = False):
         plt.text(v-(max(sort_df[var])*0.05),i-0.08,str(v),ha='center',va='center',fontsize=9.1,color="0.1")
     for index, row in sort_df.iterrows():
         image_name = row["Squad"] + ".png"  # gesuchter Name des Logos
-        imagebox = OffsetImage(images[image_name], zoom = 0.5)
+        imagebox = OffsetImage(images[image_name], zoom = 0.17)
         ab = AnnotationBbox(imagebox, (row[var]+max(sort_df[var])*0.035,row['Squad']),frameon=False)
         plt.gca().add_artist(ab)
     if title == None:
