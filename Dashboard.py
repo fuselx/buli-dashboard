@@ -215,9 +215,9 @@ def scatter(df,var1,var2,title = None ,xlab = None, ylab = None,pergame = None):
     plt.axvline(x=np.mean(df_copy[var1]),linewidth = 0.5, linestyle = "--",color = "0.5")        
     plt.axhline(y=np.mean(df_copy[var2]),linewidth = 0.5, linestyle = "--",color = "0.5")
     if title == None:
-        plt.title(var1 + " x " + var2,fontsize=16)
+        plt.title(var1 + " x " + var2,fontsize=13)
     else:
-        plt.title(title,fontsize=16)
+        plt.title(title,fontsize=13)
     if xlab == None:
         plt.xlabel(var1)
     else:
@@ -262,9 +262,9 @@ def hbar(df,var,title = None,pergame = False):
         ab = AnnotationBbox(imagebox, (row[var]+max(sort_df[var])*0.035,row['Squad']),frameon=False)
         plt.gca().add_artist(ab)
     if title == None:
-        plt.title(var,fontsize=13)
+        plt.title(var,fontsize=12)
     else:
-        plt.title(title,fontsize=13)
+        plt.title(title,fontsize=12)
     plt.axvline(x=np.mean(sort_df[var]),linewidth = 0.5,color = "0.5",linestyle = "--")
     plt.xticks([])
     plt.yticks([])
@@ -484,11 +484,27 @@ with tab1:
             st.pyplot(hbar(df,"passing.avgDist","Gespielte Distanz pro Pass in Metern",pergame = False))
         
         st.subheader("Zweidimensionale Statistiken",divider = "rainbow")
-        option = st.selectbox("Wähle die Statistik, die als Streudiagramm dargestellt werden soll", options = ["Pässe",
+        option = st.selectbox("Wähle die Statistik, die als Streudiagramm dargestellt werden soll", options = ['Schüsse',
+                                                                                                               'Expected Goals',
+                                                                                                               'Tordifferenz vs. xG',
+                                                                                                               'Ballbesitz vs. Kontakte im Strafraum',
+                                                                                                               "Pässe",
                                                                                                                "Kurzpässe",
                                                                                                                "Mittellange Pässe",
                                                                                                                "Lange Bälle",
                                                                                                                "Offensivstandards"])
+        if option == "Schüsse":
+            st.pyplot(scatter(df,"shots.Sh/90","shots.SoT/90",
+                              title = "Schüsse (aufs Tor)",xlab = "Schüsse pro Spiel",ylab = "Schüsse aufs Tor pro Spiel"))
+        if option == "Expected Goals":
+            st.pyplot(scatter(df,"shots.xG","shots.ag.xG",pergame = "xy",
+                              title = "Expected Goals (pro Spiel)",xlab = "Expected Goals",ylab = "Expected Goals against"))
+        if option == "Tordifferenz vs. xG":
+            st.pyplot(scatter(df,"xGD","GD",
+                              title = "Tordifferenz erwartet vs. tatsächlich",xlab = "Tordifferenz erwartet",ylab = "Tordifferenz tatsächlich"))
+        if option == "Ballbesitz vs. Kontakte im Strafraum":
+            st.pyplot(scatter(df,"Poss","poss.Touches.Att Pen",pergame = "y",
+                              title = "Ballbesitz",xlab = "Ballbesitz insgesamt",ylab = "Ballkontakte im Strafraum (pro Spiel)"))
         if option == "Pässe":
             st.pyplot(scatter(df,"passing.Total.Att","passing.Total.Cmp%", pergame = "x",
                               title = "Passgenauigkeit",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
@@ -528,3 +544,5 @@ with tab1:
                 st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)
     with tab3:
         st.text("in Arbeit")
+        
+
