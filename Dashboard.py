@@ -388,7 +388,7 @@ df['passing.avgDist'] = df['passing.Total.TotDist'].div(df['passing.Total.Att'])
 Tabelle = df[['Rk','Squad','MP','Pts','GD','W','D','L','GF','GA']]
 Tabelle.rename(columns = {
     'Rk':'Platz',
-    'Squad':'Verein',
+    'Squad':'Team',
     'MP':'Spiele',
     'W':'S',
     'D':'U',
@@ -399,7 +399,15 @@ Tabelle.rename(columns = {
     'Pts':'Punkte'
     },inplace = True)
 
-
+Tabelle_slim = Tabelle[['Platz','Team','Spiele','Tordifferenz','Punkte']]
+Tabelle_slim.rename(columns = {
+    'Platz':'#',
+    'Verein':'Team',
+    'Spiele':'Sp',
+    'Tordifferenz':'TD',
+    'Punkte':'Pkt'},inplace = True)
+Tabelle_slim.set_index('#', inplace=True)
+Tabelle.set_index('Platz', inplace=True)
 # Spieltage
 md = matchdays()
 md = md.drop(['Venue','Match Report','Notes'],axis = 1)
@@ -411,6 +419,41 @@ nextmd = nextmd[['Spieltag','Tag','Datum','Anstoß','Heim','Ergebnis','Auswärts
 
 # Bilder laden
 images = images()
+
+# Style der Tabellen
+tablestyle = """
+            <style>
+            table{
+                border: 2px solid white}
+            th {
+                border: 2px solid white;}
+            tbody tr:first-child th,
+            tbody tr:nth-child(2) th{
+                background-color: #66e373;
+                }
+            tbody tr:nth-child(3) th{
+                background-color: #a3f0ab;
+                }
+            tbody tr:nth-child(17) th,
+            tbody tr:nth-child(18) th{
+                background-color: #fc8326;
+                }
+            tbody tr:nth-child(16) th{
+                background-color: #f5bd73;
+                }
+            tbody tr td:nth-child(2) {
+                background:white;
+                color:black;
+                border:2px solid white;
+                ;}
+            tbody tr {
+                background:white;
+                color:black;
+                border:2px solid white;
+                ;}
+
+            </style>
+            """
 #%% Hier fängt das Dashboard an
 st.title("Zweitliga-Dashboard")
 tab1,tab2 = st.tabs(["Mannschaften","Spieler"])
@@ -425,7 +468,13 @@ with tab1:
     with col1:
         
         st.subheader("Tabelle der 2. Bundesliga",divider = "rainbow")
-        st.dataframe(Tabelle,hide_index=True,height = 675)
+        on = st.toggle("Zeige Details")
+        if on:        
+            st.table(Tabelle)
+            st.markdown(tablestyle,unsafe_allow_html=True)
+        else:
+            st.table(Tabelle_slim)
+            st.markdown(tablestyle,unsafe_allow_html=True)
         st.subheader("Spieltage",divider = "rainbow")
         options = pd.unique(md['Spieltag'])
         Start_index = list(options).index(df.loc[0,'MP'])
