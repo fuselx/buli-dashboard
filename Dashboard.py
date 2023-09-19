@@ -385,7 +385,7 @@ def radar_off(df,team):
 # Team-Stastistiken
 df = load_data()
 df['passing.avgDist'] = df['passing.Total.TotDist'].div(df['passing.Total.Att'])
-Tabelle = df[['Rk','Squad','MP','Pts','GD','W','D','L','GF','GA']]
+Tabelle = df[['Rk','Squad','MP','W','D','L','GF','GA','GD','Pts']]
 Tabelle.rename(columns = {
     'Rk':'Platz',
     'Squad':'Team',
@@ -423,10 +423,11 @@ images = images()
 # Style der Tabellen
 tablestyle = """
             <style>
-            table{
-                border: 2px solid white}
             th {
                 border: 2px solid white;}
+            thead{
+                border-right: 2px solid white;
+                }
             tbody tr:first-child th,
             tbody tr:nth-child(2) th{
                 background-color: #66e373;
@@ -441,16 +442,14 @@ tablestyle = """
             tbody tr:nth-child(16) th{
                 background-color: #f5bd73;
                 }
-            tbody tr td:nth-child(2) {
-                background:white;
-                color:black;
-                border:2px solid white;
-                ;}
+
             tbody tr {
-                background:white;
                 color:black;
                 border:2px solid white;
                 ;}
+            tbody tr:nth-child(odd){
+                background: #f7f7f7;
+               }
 
             </style>
             """
@@ -467,7 +466,7 @@ with tab1:
     
     with col1:
         
-        st.subheader("Tabelle der 2. Bundesliga",divider = "rainbow")
+        st.subheader("Tabelle",divider = "rainbow")
         on = st.toggle("Zeige Details")
         if on:        
             st.table(Tabelle)
