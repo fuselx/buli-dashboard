@@ -476,130 +476,134 @@ hidefullscreen =    '''
                     '''
 #%% Hier fängt das Dashboard an
 st.title("Zweitliga-Dashboard")
-on = st.sidebar.toggle("Mobil-Version",key = "sidebar")
-if on:
-    tab1,tab2 = st.tabs(["Mannschaften","Spieler"])
-    with tab2:
-        st.text("In Arbeit")
+tab1,tab2 = st.tabs(["Mannschaften","Spieler"])
+with tab2:
+    st.text("In Arbeit")
+
+with tab1:
+        
+    col1,col2 = st.columns((3,2),gap= "medium")
     
-    with tab1:
-            
-        col1,col2 = st.columns((3,2),gap= "medium")
-        
-        
-        with col1:
-            
-            st.subheader("Tabelle",divider = "rainbow")
+    
+    with col1:
+        st.subheader("Tabelle",divider = "rainbow")
+        on = st.toggle("Zeige Details")
+        if on:        
+            st.table(Tabelle)
+            st.markdown(tablestyle,unsafe_allow_html=True)
+            st.markdown(hidefullscreen,unsafe_allow_html=True)
+        else:
             st.table(Tabelle_slim)
             st.markdown(tablestyle,unsafe_allow_html=True)
             st.markdown(hidefullscreen,unsafe_allow_html=True)
-                
-            st.subheader("Spieltage",divider = "rainbow")
-            options = pd.unique(md['Spieltag'])
-            Start_index = list(options).index(df.loc[0,'MP'])
-            Spieltag = st.selectbox("Wähle den Spieltag",options = options,index = Start_index)
-            if Spieltag > df.loc[0,'MP']:
-                    st.dataframe(md[md["Spieltag"] == Spieltag],
-                                 hide_index=True,height = 360,
-                                 column_order=("Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
-                                 column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                                'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small")})
-                    st.markdown(hidefullscreen,unsafe_allow_html=True)
-            else:
-                    st.dataframe(md[md["Spieltag"] == Spieltag],
-                                 hide_index=True,
-                                 height = 360,
-                                 column_order=("Tag","Datum","Anstoß","Heimlogo","xG","Ergebnis","xG ","Auswärtslogo"),
-                                 column_config={'Spieltag':None,
-                                                'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                                'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
-                                                'xG':st.column_config.ProgressColumn(
-                                                    min_value=0,
-                                                    max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                                    format = "  %f",
-                                                    width = "small"),
-                                                'xG ':st.column_config.ProgressColumn(
-                                                    min_value=0,
-                                                    max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                                    format = "  %f",
-                                                    width = "small")                                            
-                                             })
-                    st.markdown(hidefullscreen,unsafe_allow_html=True)
-                    
-                
-            
+        st.subheader("Spieltage",divider = "rainbow")
+        options = pd.unique(md['Spieltag'])
+        Start_index = list(options).index(df.loc[0,'MP'])
+        Spieltag = st.selectbox("Wähle den Spieltag",options = options,index = Start_index)
+        if Spieltag > df.loc[0,'MP']:
+                st.dataframe(md[md["Spieltag"] == Spieltag],
+                             hide_index=True,height = 360,
+                             column_order=("Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
+                             column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+                                            'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small")})
+                st.markdown(hidefullscreen,unsafe_allow_html=True)
+        else:
+                st.dataframe(md[md["Spieltag"] == Spieltag],
+                             hide_index=True,
+                             height = 360,
+                             column_order=("Tag","Datum","Anstoß","Heimlogo","xG","Ergebnis","xG ","Auswärtslogo"),
+                             column_config={'Spieltag':None,
+                                            'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+                                            'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
+                                            'xG':st.column_config.ProgressColumn(
+                                                min_value=0,
+                                                max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                                format = "  %f",
+                                                width = "small"),
+                                            'xG ':st.column_config.ProgressColumn(
+                                                min_value=0,
+                                                max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                                format = "  %f",
+                                                width = "small")                                            
+                                         })
+                st.markdown(hidefullscreen,unsafe_allow_html=True)
                 
             
         
-        
-        with col2:
-            st.subheader("Eindimensionale Statistiken",divider = "rainbow")
-            option = st.selectbox("Wähle die Statistik, die als Balkendiagramm dargestellt werden soll",options=["Expected Goals pro Spiel",
-                                                                                                                 "Expected Goals pro Spiel (ohne 11m)",
-                                                                                                                 "Expected Goals against pro Spiel",
-                                                                                                                 "Tore",
-                                                                                                                 "Gegentore",
-                                                                                                                 "Passgenauigkeit",
-                                                                                                                 "Passlänge"])
-            if option == "Expected Goals pro Spiel":
-                st.pyplot(hbar(df,"shots.xG","Expected Goals pro Spiel",pergame = True))
-            elif option == "Expected Goals pro Spiel (ohne 11m)":
-                st.pyplot(hbar(df,"shots.npxG","Expected Goals pro Spiel (ohne 11m)",pergame = True))
-            elif option == "Expected Goals against pro Spiel":
-                st.pyplot(hbar(df,"xGA","Expected Goals against pro Spiel",pergame = True))
-            elif option == "Tore":
-                st.pyplot(hbar(df,"GF","Geschossene Tore"))
-            elif option == "Gegentore":
-                st.pyplot(hbar(df,"GA","Gegentore"))
-            elif option == "Passgenauigkeit":
-                st.pyplot(hbar(df,"passing.Total.Cmp%","Angekommene Pässe (in %)"))
-            elif option == "Passlänge":
-                st.pyplot(hbar(df,"passing.avgDist","Gespielte Distanz pro Pass in Metern",pergame = False))
             
-            st.subheader("Zweidimensionale Statistiken",divider = "rainbow")
-            option = st.selectbox("Wähle die Statistik, die als Streudiagramm dargestellt werden soll", options = ['Schüsse',
-                                                                                                                   'Expected Goals',
-                                                                                                                   'Tordifferenz vs. xG',
-                                                                                                                   'Ballbesitz vs. Kontakte im Strafraum',
-                                                                                                                   "Pässe",
-                                                                                                                   "Kurzpässe",
-                                                                                                                   "Mittellange Pässe",
-                                                                                                                   "Lange Bälle",
-                                                                                                                   "Offensivstandards"])
-            if option == "Schüsse":
-                st.pyplot(scatter(df,"shots.Sh/90","shots.SoT/90",
-                                  title = "Schüsse (aufs Tor)",xlab = "Schüsse pro Spiel",ylab = "Schüsse aufs Tor pro Spiel"))
-            if option == "Expected Goals":
-                st.pyplot(scatter(df,"shots.xG","shots.ag.xG",pergame = "xy",
-                                  title = "Expected Goals (pro Spiel)",xlab = "Expected Goals",ylab = "Expected Goals against"))
-            if option == "Tordifferenz vs. xG":
-                st.pyplot(scatter(df,"xGD","GD",
-                                  title = "Tordifferenz erwartet vs. tatsächlich",xlab = "Tordifferenz erwartet",ylab = "Tordifferenz tatsächlich"))
-            if option == "Ballbesitz vs. Kontakte im Strafraum":
-                st.pyplot(scatter(df,"Poss","poss.Touches.Att Pen",pergame = "y",
-                                  title = "Ballbesitz",xlab = "Ballbesitz insgesamt",ylab = "Ballkontakte im Strafraum (pro Spiel)"))
-            if option == "Pässe":
-                st.pyplot(scatter(df,"passing.Total.Att","passing.Total.Cmp%", pergame = "x",
-                                  title = "Passgenauigkeit",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
-            if option == "Kurzpässe":
-                 st.pyplot(scatter(df,"passing.Short.Att","passing.Short.Cmp%", pergame = "x",
-                                      title = "Passgenauigkeit Kurzpässe",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
-                 st.caption("Kurzpässe: Pässe zwischen 5 und 16 Metern (5/15 Yards)")
-            if option == "Mittellange Pässe":
-                st.pyplot(scatter(df,"passing.Medium.Att","passing.Medium.Cmp%", pergame = "x",
-                                  title = "Passgenauigkeit mittellange Pässe",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
-                st.caption("Mittellange Pässe: Pässe zwischen 16 und 32 Metern (15/30 Yards)")
-            if option == "Lange Bälle":
-                st.pyplot(scatter(df,"passing.Long.Att","passing.Long.Cmp%", pergame = "x",
-                                  title = "Passgenauigkeit lange Bälle",xlab = "Gespielte Bälle pro Spiel",ylab = "Angekommene Bälle (in %)"))
-                st.caption("Lange Bälle: Pässe über eine Strecke von mindesten 32 Metern (30 Yards)")
-            if option == "Offensivstandards":
-                st.pyplot(scatter(df,"creation.SCA Types.PassDead","creation.GCA Types.PassDead",
-                                  title = "Offensivstandards",xlab = "Chancen nach Standardsituationen",ylab = "Tore nach Standardsituationen"))
         
+    
+    
+    with col2:
+        st.subheader("Eindimensionale Statistiken",divider = "rainbow")
+        option = st.selectbox("Wähle die Statistik, die als Balkendiagramm dargestellt werden soll",options=["Expected Goals pro Spiel",
+                                                                                                             "Expected Goals pro Spiel (ohne 11m)",
+                                                                                                             "Expected Goals against pro Spiel",
+                                                                                                             "Tore",
+                                                                                                             "Gegentore",
+                                                                                                             "Passgenauigkeit",
+                                                                                                             "Passlänge"])
+        if option == "Expected Goals pro Spiel":
+            st.pyplot(hbar(df,"shots.xG","Expected Goals pro Spiel",pergame = True))
+        elif option == "Expected Goals pro Spiel (ohne 11m)":
+            st.pyplot(hbar(df,"shots.npxG","Expected Goals pro Spiel (ohne 11m)",pergame = True))
+        elif option == "Expected Goals against pro Spiel":
+            st.pyplot(hbar(df,"xGA","Expected Goals against pro Spiel",pergame = True))
+        elif option == "Tore":
+            st.pyplot(hbar(df,"GF","Geschossene Tore"))
+        elif option == "Gegentore":
+            st.pyplot(hbar(df,"GA","Gegentore"))
+        elif option == "Passgenauigkeit":
+            st.pyplot(hbar(df,"passing.Total.Cmp%","Angekommene Pässe (in %)"))
+        elif option == "Passlänge":
+            st.pyplot(hbar(df,"passing.avgDist","Gespielte Distanz pro Pass in Metern",pergame = False))
         
-        st.header("Teamstatistiken",divider = "rainbow")  
-        tab1,tab2,tab3,tab4 = st.tabs(["Gesamt","Offensiv","Defensiv","Passprofil"])
+        st.subheader("Zweidimensionale Statistiken",divider = "rainbow")
+        option = st.selectbox("Wähle die Statistik, die als Streudiagramm dargestellt werden soll", options = ['Schüsse',
+                                                                                                               'Expected Goals',
+                                                                                                               'Tordifferenz vs. xG',
+                                                                                                               'Ballbesitz vs. Kontakte im Strafraum',
+                                                                                                               "Pässe",
+                                                                                                               "Kurzpässe",
+                                                                                                               "Mittellange Pässe",
+                                                                                                               "Lange Bälle",
+                                                                                                               "Offensivstandards"])
+        if option == "Schüsse":
+            st.pyplot(scatter(df,"shots.Sh/90","shots.SoT/90",
+                              title = "Schüsse (aufs Tor)",xlab = "Schüsse pro Spiel",ylab = "Schüsse aufs Tor pro Spiel"))
+        if option == "Expected Goals":
+            st.pyplot(scatter(df,"shots.xG","shots.ag.xG",pergame = "xy",
+                              title = "Expected Goals (pro Spiel)",xlab = "Expected Goals",ylab = "Expected Goals against"))
+        if option == "Tordifferenz vs. xG":
+            st.pyplot(scatter(df,"xGD","GD",
+                              title = "Tordifferenz erwartet vs. tatsächlich",xlab = "Tordifferenz erwartet",ylab = "Tordifferenz tatsächlich"))
+        if option == "Ballbesitz vs. Kontakte im Strafraum":
+            st.pyplot(scatter(df,"Poss","poss.Touches.Att Pen",pergame = "y",
+                              title = "Ballbesitz",xlab = "Ballbesitz insgesamt",ylab = "Ballkontakte im Strafraum (pro Spiel)"))
+        if option == "Pässe":
+            st.pyplot(scatter(df,"passing.Total.Att","passing.Total.Cmp%", pergame = "x",
+                              title = "Passgenauigkeit",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
+        if option == "Kurzpässe":
+             st.pyplot(scatter(df,"passing.Short.Att","passing.Short.Cmp%", pergame = "x",
+                                  title = "Passgenauigkeit Kurzpässe",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
+             st.caption("Kurzpässe: Pässe zwischen 5 und 16 Metern (5/15 Yards)")
+        if option == "Mittellange Pässe":
+            st.pyplot(scatter(df,"passing.Medium.Att","passing.Medium.Cmp%", pergame = "x",
+                              title = "Passgenauigkeit mittellange Pässe",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
+            st.caption("Mittellange Pässe: Pässe zwischen 16 und 32 Metern (15/30 Yards)")
+        if option == "Lange Bälle":
+            st.pyplot(scatter(df,"passing.Long.Att","passing.Long.Cmp%", pergame = "x",
+                              title = "Passgenauigkeit lange Bälle",xlab = "Gespielte Bälle pro Spiel",ylab = "Angekommene Bälle (in %)"))
+            st.caption("Lange Bälle: Pässe über eine Strecke von mindesten 32 Metern (30 Yards)")
+        if option == "Offensivstandards":
+            st.pyplot(scatter(df,"creation.SCA Types.PassDead","creation.GCA Types.PassDead",
+                              title = "Offensivstandards",xlab = "Chancen nach Standardsituationen",ylab = "Tore nach Standardsituationen"))
+    
+    
+    st.header("Teamvergleich",divider = "rainbow") 
+    on = st.toggle("Mobil-Version",key = "vergleich")
+    tab1,tab2,tab3,tab4 = st.tabs(["Gesamt","Offensiv","Defensiv","Passprofil"])
+    if on:
         with tab1:
             st.text("in Arbeit")
         with tab2:
@@ -607,134 +611,11 @@ if on:
             option = st.selectbox("Wähle das Team, dessen Offensivstatistiken links dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
             index = df[df["Squad"] == option].index[0]
             if option == df.loc[index,"Squad"]:
-                st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)
-            
+                st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)        
         with tab3:
-            st.text("in Arbeit")  
-
+            st.text("in Arbeit")
         
-else:
-    tab1,tab2 = st.tabs(["Mannschaften","Spieler"])
-    with tab2:
-        st.text("In Arbeit")
-    
-    with tab1:
-            
-        col1,col2 = st.columns((3,2),gap= "medium")
-        
-        
-        with col1:
-            
-            st.subheader("Tabelle",divider = "rainbow")
-            st.table(Tabelle)
-            st.markdown(tablestyle,unsafe_allow_html=True)
-                
-            st.subheader("Spieltage",divider = "rainbow")
-            options = pd.unique(md['Spieltag'])
-            Start_index = list(options).index(df.loc[0,'MP'])
-            Spieltag = st.selectbox("Wähle den Spieltag",options = options,index = Start_index)
-            if Spieltag > df.loc[0,'MP']:
-                    st.dataframe(md[md["Spieltag"] == Spieltag],
-                                 hide_index=True,height = 360,
-                                 column_order=("Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
-                                 column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                                'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small")})
-                    st.markdown(hidefullscreen,unsafe_allow_html=True)
-            else:
-                    st.dataframe(md[md["Spieltag"] == Spieltag],
-                                 hide_index=True,
-                                 height = 360,
-                                 column_order=("Tag","Datum","Anstoß","Heimlogo","xG","Ergebnis","xG ","Auswärtslogo"),
-                                 column_config={'Spieltag':None,
-                                                'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                                'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
-                                                'xG':st.column_config.ProgressColumn(
-                                                    min_value=0,
-                                                    max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                                    format = "  %f",
-                                                    width = "small"),
-                                                'xG ':st.column_config.ProgressColumn(
-                                                    min_value=0,
-                                                    max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                                    format = "  %f",
-                                                    width = "small")                                            
-                                             })
-                    st.markdown(hidefullscreen,unsafe_allow_html=True)
-                    
-                
-            
-                
-            
-        
-        
-        with col2:
-            st.subheader("Eindimensionale Statistiken",divider = "rainbow")
-            option = st.selectbox("Wähle die Statistik, die als Balkendiagramm dargestellt werden soll",options=["Expected Goals pro Spiel",
-                                                                                                                 "Expected Goals pro Spiel (ohne 11m)",
-                                                                                                                 "Expected Goals against pro Spiel",
-                                                                                                                 "Tore",
-                                                                                                                 "Gegentore",
-                                                                                                                 "Passgenauigkeit",
-                                                                                                                 "Passlänge"])
-            if option == "Expected Goals pro Spiel":
-                st.pyplot(hbar(df,"shots.xG","Expected Goals pro Spiel",pergame = True))
-            elif option == "Expected Goals pro Spiel (ohne 11m)":
-                st.pyplot(hbar(df,"shots.npxG","Expected Goals pro Spiel (ohne 11m)",pergame = True))
-            elif option == "Expected Goals against pro Spiel":
-                st.pyplot(hbar(df,"xGA","Expected Goals against pro Spiel",pergame = True))
-            elif option == "Tore":
-                st.pyplot(hbar(df,"GF","Geschossene Tore"))
-            elif option == "Gegentore":
-                st.pyplot(hbar(df,"GA","Gegentore"))
-            elif option == "Passgenauigkeit":
-                st.pyplot(hbar(df,"passing.Total.Cmp%","Angekommene Pässe (in %)"))
-            elif option == "Passlänge":
-                st.pyplot(hbar(df,"passing.avgDist","Gespielte Distanz pro Pass in Metern",pergame = False))
-            
-            st.subheader("Zweidimensionale Statistiken",divider = "rainbow")
-            option = st.selectbox("Wähle die Statistik, die als Streudiagramm dargestellt werden soll", options = ['Schüsse',
-                                                                                                                   'Expected Goals',
-                                                                                                                   'Tordifferenz vs. xG',
-                                                                                                                   'Ballbesitz vs. Kontakte im Strafraum',
-                                                                                                                   "Pässe",
-                                                                                                                   "Kurzpässe",
-                                                                                                                   "Mittellange Pässe",
-                                                                                                                   "Lange Bälle",
-                                                                                                                   "Offensivstandards"])
-            if option == "Schüsse":
-                st.pyplot(scatter(df,"shots.Sh/90","shots.SoT/90",
-                                  title = "Schüsse (aufs Tor)",xlab = "Schüsse pro Spiel",ylab = "Schüsse aufs Tor pro Spiel"))
-            if option == "Expected Goals":
-                st.pyplot(scatter(df,"shots.xG","shots.ag.xG",pergame = "xy",
-                                  title = "Expected Goals (pro Spiel)",xlab = "Expected Goals",ylab = "Expected Goals against"))
-            if option == "Tordifferenz vs. xG":
-                st.pyplot(scatter(df,"xGD","GD",
-                                  title = "Tordifferenz erwartet vs. tatsächlich",xlab = "Tordifferenz erwartet",ylab = "Tordifferenz tatsächlich"))
-            if option == "Ballbesitz vs. Kontakte im Strafraum":
-                st.pyplot(scatter(df,"Poss","poss.Touches.Att Pen",pergame = "y",
-                                  title = "Ballbesitz",xlab = "Ballbesitz insgesamt",ylab = "Ballkontakte im Strafraum (pro Spiel)"))
-            if option == "Pässe":
-                st.pyplot(scatter(df,"passing.Total.Att","passing.Total.Cmp%", pergame = "x",
-                                  title = "Passgenauigkeit",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
-            if option == "Kurzpässe":
-                 st.pyplot(scatter(df,"passing.Short.Att","passing.Short.Cmp%", pergame = "x",
-                                      title = "Passgenauigkeit Kurzpässe",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
-                 st.caption("Kurzpässe: Pässe zwischen 5 und 16 Metern (5/15 Yards)")
-            if option == "Mittellange Pässe":
-                st.pyplot(scatter(df,"passing.Medium.Att","passing.Medium.Cmp%", pergame = "x",
-                                  title = "Passgenauigkeit mittellange Pässe",xlab = "Gespielte Pässe pro Spiel",ylab = "Angekommene Pässe (in %)"))
-                st.caption("Mittellange Pässe: Pässe zwischen 16 und 32 Metern (15/30 Yards)")
-            if option == "Lange Bälle":
-                st.pyplot(scatter(df,"passing.Long.Att","passing.Long.Cmp%", pergame = "x",
-                                  title = "Passgenauigkeit lange Bälle",xlab = "Gespielte Bälle pro Spiel",ylab = "Angekommene Bälle (in %)"))
-                st.caption("Lange Bälle: Pässe über eine Strecke von mindesten 32 Metern (30 Yards)")
-            if option == "Offensivstandards":
-                st.pyplot(scatter(df,"creation.SCA Types.PassDead","creation.GCA Types.PassDead",
-                                  title = "Offensivstandards",xlab = "Chancen nach Standardsituationen",ylab = "Tore nach Standardsituationen"))
-        
-        
-        st.header("Teamvergleich",divider = "rainbow")  
-        tab1,tab2,tab3,tab4 = st.tabs(["Gesamt","Offensiv","Defensiv","Passprofil"])
+    else:
         with tab1:
             st.text("in Arbeit")
         with tab2:
@@ -752,23 +633,8 @@ else:
                     st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)
         with tab3:
             st.text("in Arbeit")
+
+            
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-  
         
-    
-    
+
