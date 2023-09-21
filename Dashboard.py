@@ -130,6 +130,7 @@ def load_data():
                  "Paderborn 07":"Paderborn"
         }
     df['Squad'] = df['Squad'].replace(new_names)
+    df['passing.LongPct'] = (100*df['passing.Long.Att'].div(df['passing.Total.Att'])).round(1)
     return df
 #%% Spieltage einlesen
 @st.cache_data
@@ -160,7 +161,7 @@ def matchdays():
             'Wed':'Mi.',
             'Thu':'Do.'}
     md.loc[:,'Tag'] = md.loc[:,'Tag'].replace(days)
-    md['Datum'] = pd.to_datetime(md['Datum']).dt.strftime('%d.%m.%y')
+    md['Datum'] = pd.to_datetime(md['Datum']).dt.strftime('%d.%m.%Y')
     md['Spieltag'] = md['Spieltag'].astype('int')
     md['Zuschauer'] = pd.to_numeric(md['Zuschauer'])
     md['Ergebnis'] = md['Ergebnis'].fillna("-:-")
@@ -298,7 +299,7 @@ def radar_off(df,team):
     OffStd = (df_copy.at[i,"creation.SCA Types.PassDead"]-min(df_copy["creation.SCA Types.PassDead"]))/(max(df_copy["creation.SCA Types.PassDead"])-min(df_copy["creation.SCA Types.PassDead"]))
     Dribb = (df_copy.at[i,"poss.Take-Ons.Succ"]-min(df_copy["poss.Take-Ons.Succ"]))/(max(df_copy["poss.Take-Ons.Succ"])-min(df_copy["poss.Take-Ons.Succ"]))
     
-    df_copy['n_npxG'] = (df_copy['shots.xG'] - df_copy['shots.xG'].min()) / (df_copy['shots.xG'].max() - df_copy['shots.xG'].min())
+    df_copy['n_npxG'] = (df_copy['shots.npxG/Sh'] - df_copy['shots.npxG/Sh'].min()) / (df_copy['shots.npxG/Sh'].max() - df_copy['shots.npxG/Sh'].min())
     df_copy['n_Gls'] = (df_copy['shots.Gls'] - df_copy['shots.Gls'].min()) / (df_copy['shots.Gls'].max() - df_copy['shots.Gls'].min())
     df_copy['n_Sh'] = (df_copy['shots.Sh/90'] - df_copy['shots.Sh/90'].min()) / (df_copy['shots.Sh/90'].max() - df_copy['shots.Sh/90'].min())
     df_copy['n_OffKon'] = (df_copy['poss.Touches.Att 3rd'] - df_copy['poss.Touches.Att 3rd'].min()) / (df_copy['poss.Touches.Att 3rd'].max() - df_copy['poss.Touches.Att 3rd'].min())
@@ -375,15 +376,230 @@ def radar_off(df,team):
                       showlegend=False,
                       dragmode = False,
                       clickmode = "none",
-                      font = dict(size = 14,color = "black",family = "arial"),
+                      font = dict(size = 12,color = "black",family = "arial"),
                       title = "",
                       title_font_size=35,
                       title_x=0,
                       title_font_color = "black",
-                      polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1])))
+                      polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
+    return fig
+#%%
+@st.cache_data
+def radar_pass(df,team):
+    """
+    Funktion, um Radar-Charts für jede Mannschaft zu erstellen
+
+    ----------
+    df : Datensatz
+    team : Der Verein, für den der Plot erstellt werden soll (needs "")
+
+    """
+    df_copy = df.copy()
+    df_copy['passing.Total.pergame'] = df_copy["passing.Total.Att"].div(df_copy['MP']).astype('int') #pro Spiel
+    df_copy['pt.Pass Types.Sw'] = df_copy['pt.Pass Types.Sw'].div(df_copy['MP']).round(1) #pro Spiel
+    df_copy['pt.Pass Types.Crs'] = df_copy['pt.Pass Types.Crs'].div(df_copy['MP']).round(1) #pro Spiel
+    df_copy['passing.PrgP'] = df_copy['passing.PrgP'].div(df_copy['MP']).round(1) #pro Spiel
+    i = df_copy[df_copy['Squad'] == team].index[0]
+    Pässe = (df_copy.at[i,"passing.Total.pergame"]-min(df_copy["passing.Total.pergame"]))/(max(df_copy["passing.Total.pergame"])-min(df_copy["passing.Total.pergame"]))
+    Passgenauigkeit = (df_copy.at[i,"passing.Total.Cmp%"]-min(df_copy["passing.Total.Cmp%"]))/(max(df_copy["passing.Total.Cmp%"])-min(df_copy["passing.Total.Cmp%"]))
+    ProgP = (df_copy.at[i,"passing.PrgP"]-min(df_copy["passing.PrgP"]))/(max(df_copy["passing.PrgP"])-min(df_copy["passing.PrgP"]))
+    TB = (df_copy.at[i,"pt.Pass Types.TB"]-min(df_copy["pt.Pass Types.TB"]))/(max(df_copy["pt.Pass Types.TB"])-min(df_copy["pt.Pass Types.TB"]))
+    Ballbesitz = (df_copy.at[i,"Poss"]-min(df_copy["Poss"]))/(max(df_copy["Poss"])-min(df_copy["Poss"]))
+    Flankenwechsel = (df_copy.at[i,"pt.Pass Types.Sw"]-min(df_copy["pt.Pass Types.Sw"]))/(max(df_copy["pt.Pass Types.Sw"])-min(df_copy["pt.Pass Types.Sw"]))
+    Flanken = (df_copy.at[i,"pt.Pass Types.Crs"]-min(df_copy["pt.Pass Types.Crs"]))/(max(df_copy["pt.Pass Types.Crs"])-min(df_copy["pt.Pass Types.Crs"]))
+    LangeB = (df_copy.at[i,"passing.LongPct"]-min(df_copy["passing.LongPct"]))/(max(df_copy["passing.LongPct"])-min(df_copy["passing.LongPct"]))
+    
+    df_copy['n_Pässe'] = (df_copy['passing.Total.pergame'] - df_copy['passing.Total.pergame'].min()) / (df_copy['passing.Total.pergame'].max() - df_copy['passing.Total.pergame'].min())
+    df_copy['n_Passgenauigkeit'] = (df_copy['passing.Total.Cmp%'] - df_copy['passing.Total.Cmp%'].min()) / (df_copy['passing.Total.Cmp%'].max() - df_copy['passing.Total.Cmp%'].min())
+    df_copy['n_ProgP'] = (df_copy['passing.PrgP'] - df_copy['passing.PrgP'].min()) / (df_copy['passing.PrgP'].max() - df_copy['passing.PrgP'].min())
+    df_copy['n_TB'] = (df_copy['pt.Pass Types.TB'] - df_copy['pt.Pass Types.TB'].min()) / (df_copy['pt.Pass Types.TB'].max() - df_copy['pt.Pass Types.TB'].min())
+    df_copy['n_Ballbesitz'] = (df_copy['Poss'] - df_copy['Poss'].min()) / (df_copy['Poss'].max() - df_copy['Poss'].min())
+    df_copy['n_Flankenwechsel'] = (df_copy['pt.Pass Types.Sw'] - df_copy['pt.Pass Types.Sw'].min()) / (df_copy['pt.Pass Types.Sw'].max() - df_copy['pt.Pass Types.Sw'].min())
+    df_copy['n_Flanken'] = (df_copy['pt.Pass Types.Crs'] - df_copy['pt.Pass Types.Crs'].min()) / (df_copy['pt.Pass Types.Crs'].max() - df_copy['pt.Pass Types.Crs'].min())
+    df_copy['n_LangeB'] = (df_copy['passing.LongPct'] - df_copy['passing.LongPct'].min()) / (df_copy['passing.LongPct'].max() - df_copy['passing.LongPct'].min())
+    
+    dPässe = df_copy["n_Pässe"].mean()
+    dPassgenauigkeit = df_copy["n_Passgenauigkeit"].mean()
+    dProgP = df_copy["n_ProgP"].mean()
+    dTB = df_copy["n_TB"].mean()
+    dBallbesitz = df_copy["n_Ballbesitz"].mean()
+    dFlankenwechsel = df_copy["n_Flankenwechsel"].mean()
+    dFlanken = df_copy["n_Flanken"].mean()
+    dLangeB =  df_copy["n_LangeB"].mean()
+    
+    df1 = pd.DataFrame(dict( # Teamwert
+        r = [Pässe,Ballbesitz,Passgenauigkeit,ProgP,TB,LangeB,Flankenwechsel,Flanken,Pässe],
+        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
+                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
+                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
+                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
+                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
+                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
+                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
+                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
+                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
+    
+    df2 = pd.DataFrame(dict( # Liga-Durchschnitt
+        r = [dPässe,dBallbesitz,dPassgenauigkeit,dProgP,dTB,dLangeB,dFlankenwechsel,dFlanken,dPässe],
+        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
+                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
+                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
+                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
+                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
+                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
+                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
+                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
+                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
+    
+    df1['Model'] = team
+    df2['Model'] = 'Ligadurchschnitt'
+    df = pd.concat([df1,df2], axis=0)
+    color_discrete_map = {
+    team: 'green',
+    'Ligadurchschnitt': 'gray',
+}
+
+    fig = px.line_polar(df,r='r',color = 'Model',theta = 'theta',
+                        color_discrete_map=color_discrete_map,line_shape = "linear")
+    fig.update_traces(fill='toself',
+                      opacity=0.6,  # Set fill opacity
+                      line=dict(width=0),  # Set line opacity
+                      mode = 'lines')      
+    fig.update_polars(bgcolor='white',
+                      gridshape = "linear",
+                      hole = 0,
+                      angularaxis = dict(
+                          gridcolor= "gray",
+                          griddash = "dot",
+                          linecolor = "black",
+                          linewidth = 0.5,
+                          ticks = ""),
+                      radialaxis = dict(
+                          color = "white",
+                          gridwidth = 0.1,
+                          dtick = 0.25,
+                          linecolor = "white",
+                          showline = False,
+                          ticks = ""
+                          ))                 
+    fig.update_layout(template = "none",
+                      showlegend=False,
+                      dragmode = False,
+                      clickmode = "none",
+                      font = dict(size = 12,color = "black",family = "arial"),
+                      title = "",
+                      title_font_size=35,
+                      title_x=0,
+                      title_font_color = "black",
+                      polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
     return fig
 
+#%%
+@st.cache_data
+def radar_ges(df,team):
+    """
+    Funktion, um Radar-Charts für jede Mannschaft zu erstellen
 
+    ----------
+    df : Datensatz
+    team : Der Verein, für den der Plot erstellt werden soll (needs "")
+
+    """
+    df_copy = df.copy()
+    i = df_copy[df_copy['Squad'] == team].index[0]
+    Pässe = (df_copy.at[i,"passing.Total.pergame"]-min(df_copy["passing.Total.pergame"]))/(max(df_copy["passing.Total.pergame"])-min(df_copy["passing.Total.pergame"]))
+    Passgenauigkeit = (df_copy.at[i,"passing.Total.Cmp%"]-min(df_copy["passing.Total.Cmp%"]))/(max(df_copy["passing.Total.Cmp%"])-min(df_copy["passing.Total.Cmp%"]))
+    ProgP = (df_copy.at[i,"passing.PrgP"]-min(df_copy["passing.PrgP"]))/(max(df_copy["passing.PrgP"])-min(df_copy["passing.PrgP"]))
+    TB = (df_copy.at[i,"pt.Pass Types.TB"]-min(df_copy["pt.Pass Types.TB"]))/(max(df_copy["pt.Pass Types.TB"])-min(df_copy["pt.Pass Types.TB"]))
+    Ballbesitz = (df_copy.at[i,"Poss"]-min(df_copy["Poss"]))/(max(df_copy["Poss"])-min(df_copy["Poss"]))
+    Flankenwechsel = (df_copy.at[i,"pt.Pass Types.Sw"]-min(df_copy["pt.Pass Types.Sw"]))/(max(df_copy["pt.Pass Types.Sw"])-min(df_copy["pt.Pass Types.Sw"]))
+    Flanken = (df_copy.at[i,"pt.Pass Types.Crs"]-min(df_copy["pt.Pass Types.Crs"]))/(max(df_copy["pt.Pass Types.Crs"])-min(df_copy["pt.Pass Types.Crs"]))
+    LangeB = (df_copy.at[i,"passing.LongPct"]-min(df_copy["passing.LongPct"]))/(max(df_copy["passing.LongPct"])-min(df_copy["passing.LongPct"]))
+    
+    df_copy['n_Pässe'] = (df_copy['passing.Total.pergame'] - df_copy['passing.Total.pergame'].min()) / (df_copy['passing.Total.pergame'].max() - df_copy['passing.Total.pergame'].min())
+    df_copy['n_Passgenauigkeit'] = (df_copy['passing.Total.Cmp%'] - df_copy['passing.Total.Cmp%'].min()) / (df_copy['passing.Total.Cmp%'].max() - df_copy['passing.Total.Cmp%'].min())
+    df_copy['n_ProgP'] = (df_copy['passing.PrgP'] - df_copy['passing.PrgP'].min()) / (df_copy['passing.PrgP'].max() - df_copy['passing.PrgP'].min())
+    df_copy['n_TB'] = (df_copy['pt.Pass Types.TB'] - df_copy['pt.Pass Types.TB'].min()) / (df_copy['pt.Pass Types.TB'].max() - df_copy['pt.Pass Types.TB'].min())
+    df_copy['n_Ballbesitz'] = (df_copy['Poss'] - df_copy['Poss'].min()) / (df_copy['Poss'].max() - df_copy['Poss'].min())
+    df_copy['n_Flankenwechsel'] = (df_copy['pt.Pass Types.Sw'] - df_copy['pt.Pass Types.Sw'].min()) / (df_copy['pt.Pass Types.Sw'].max() - df_copy['pt.Pass Types.Sw'].min())
+    df_copy['n_Flanken'] = (df_copy['pt.Pass Types.Crs'] - df_copy['pt.Pass Types.Crs'].min()) / (df_copy['pt.Pass Types.Crs'].max() - df_copy['pt.Pass Types.Crs'].min())
+    df_copy['n_LangeB'] = (df_copy['passing.LongPct'] - df_copy['passing.LongPct'].min()) / (df_copy['passing.LongPct'].max() - df_copy['passing.LongPct'].min())
+    
+    dPässe = df_copy["n_Pässe"].mean()
+    dPassgenauigkeit = df_copy["n_Passgenauigkeit"].mean()
+    dProgP = df_copy["n_ProgP"].mean()
+    dTB = df_copy["n_TB"].mean()
+    dBallbesitz = df_copy["n_Ballbesitz"].mean()
+    dFlankenwechsel = df_copy["n_Flankenwechsel"].mean()
+    dFlanken = df_copy["n_Flanken"].mean()
+    dLangeB =  df_copy["n_LangeB"].mean()
+    
+    df1 = pd.DataFrame(dict( # Teamwert
+        r = [Pässe,Ballbesitz,Passgenauigkeit,ProgP,TB,LangeB,Flankenwechsel,Flanken,Pässe],
+        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
+                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
+                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
+                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
+                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
+                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
+                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
+                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
+                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
+    
+    df2 = pd.DataFrame(dict( # Liga-Durchschnitt
+        r = [dPässe,dBallbesitz,dPassgenauigkeit,dProgP,dTB,dLangeB,dFlankenwechsel,dFlanken,dPässe],
+        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
+                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
+                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
+                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
+                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
+                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
+                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
+                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
+                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
+    
+    df1['Model'] = team
+    df2['Model'] = 'Ligadurchschnitt'
+    df = pd.concat([df1,df2], axis=0)
+    color_discrete_map = {
+    team: 'green',
+    'Ligadurchschnitt': 'gray',
+}
+
+    fig = px.line_polar(df,r='r',color = 'Model',theta = 'theta',
+                        color_discrete_map=color_discrete_map,line_shape = "linear")
+    fig.update_traces(fill='toself',
+                      opacity=0.6,  # Set fill opacity
+                      line=dict(width=0),  # Set line opacity
+                      mode = 'lines')      
+    fig.update_polars(bgcolor='white',
+                      gridshape = "linear",
+                      hole = 0,
+                      angularaxis = dict(
+                          gridcolor= "gray",
+                          griddash = "dot",
+                          linecolor = "black",
+                          linewidth = 0.5,
+                          ticks = ""),
+                      radialaxis = dict(
+                          color = "white",
+                          gridwidth = 0.1,
+                          dtick = 0.25,
+                          linecolor = "white",
+                          showline = False,
+                          ticks = ""
+                          ))                 
+    fig.update_layout(template = "none",
+                      showlegend=False,
+                      dragmode = False,
+                      clickmode = "none",
+                      font = dict(size = 12,color = "black",family = "arial"),
+                      title = "",
+                      title_font_size=35,
+                      title_x=0,
+                      title_font_color = "black",
+                      polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
+    return fig
 #%% Vorbereitung von Tabellen für das Dashboard
 # Team-Stastistiken
 df = load_data()
@@ -422,17 +638,14 @@ images = images()
 # Bilder in die Tabelle laden
 md['Heimlogo'] = None
 md['Auswärtslogo'] = None
+md['Heimlogo2'] = None
+md['Auswärtslogo2'] = None
 for index, row in md.iterrows():
     imagename_home = row['Heim'] + ".png"
     imagename_away = row['Auswärts'] + ".png"
     md.loc[index,'Heimlogo'] = directory + imagename_home
-    md.loc[index,'Auswärtslogo'] = directory + imagename_away
-    
-#lastmd = md[md['Spieltag'] == df.loc[0,"MP"]]
-#lastmd = lastmd[['Spieltag','Tag','Datum','Anstoß','Heimlogo','Ergebnis','Auswärtslogo','Zuschauer','Schiedsrichter']]
+    md.loc[index,'Auswärtslogo'] = directory + imagename_away    
 
-#nextmd = md[md['Spieltag'] == df.loc[0,"MP"] + 1]
-#nextmd = nextmd[['Spieltag','Tag','Datum','Anstoß','Heimlogo','Ergebnis','Auswärtslogo']]
 
 
 # Style der Tabellen
@@ -468,7 +681,6 @@ tablestyle = """
             th{
                 font-weight:bold !important
                 }
-
             </style>
             """
 hidefullscreen =    '''
@@ -477,6 +689,7 @@ hidefullscreen =    '''
                         visibility: hidden;}
                     </style>
                     '''
+                    
 #%% Hier fängt das Dashboard an
 st.title("Zweitliga-Dashboard")
         
@@ -486,7 +699,7 @@ col1,col2 = st.columns((3,2),gap= "medium")
 with col1:
     st.subheader("Tabelle",divider = "rainbow")
     on = st.toggle("Zeige Details")
-    if on:        
+    if on:  
         st.table(Tabelle)
         st.markdown(tablestyle,unsafe_allow_html=True)
         st.markdown("""
@@ -497,6 +710,7 @@ with col1:
     else:
         st.table(Tabelle_slim)
         st.markdown(tablestyle,unsafe_allow_html=True)
+        st.markdown(hidefullscreen,unsafe_allow_html=True)
         st.markdown("""
                     <style>
                     tbody td:nth-child(5){
@@ -538,24 +752,24 @@ with col1:
                                                 format = "  %f",
                                                 width = "small")                                            
                                          })
-                st.markdown(hidefullscreen,unsafe_allow_html=True)
     else:
+        st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
         st.dataframe(md[md["Spieltag"] == Spieltag],
                      hide_index=True,height = 360,
-                     column_order=("Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
+                     column_order=("Tag","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
                      column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                    'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small")})
+                                    'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
+                                    'Anstoß':'Zeit',
+                                    'Ergebnis':""})
         st.markdown("""
                     <style>
                     div.s1jz82f8{
                         pointer-events: none;}
                     </style>
                     """,unsafe_allow_html=True)
+        st.markdown(hidefullscreen,unsafe_allow_html=True)
         
-            
-        
-    
-        
+
     
 
 
@@ -567,7 +781,8 @@ with col2:
                                                                                                          "Tore",
                                                                                                          "Gegentore",
                                                                                                          "Passgenauigkeit",
-                                                                                                         "Passlänge"])
+                                                                                                         "Passlänge",
+                                                                                                         "Lange Bälle"])
     if option == "Expected Goals pro Spiel":
         st.pyplot(hbar(df,"shots.xG","Expected Goals pro Spiel",pergame = True))
     elif option == "Expected Goals pro Spiel (ohne 11m)":
@@ -582,6 +797,9 @@ with col2:
         st.pyplot(hbar(df,"passing.Total.Cmp%","Angekommene Pässe (in %)"))
     elif option == "Passlänge":
         st.pyplot(hbar(df,"passing.avgDist","Gespielte Distanz pro Pass in Metern",pergame = False))
+    elif option == "Lange Bälle":
+        st.pyplot(hbar(df,"passing.LongPct","Anteil langer Bälle an allen Pässen (in %)",pergame = False))
+        st.caption("Pässe über eine Distanz von mehr als 32 Metern")
     
     st.subheader("Zweidimensionale Statistiken",divider = "rainbow")
     option = st.selectbox("Wähle die Statistik, die als Streudiagramm dargestellt werden soll", options = ['Schüsse',
@@ -627,23 +845,23 @@ with col2:
 
 st.header("Teamvergleich",divider = "rainbow") 
 on = st.toggle("Mobil-Version",key = "vergleich")
-tab1,tab2,tab3,tab4 = st.tabs(["Gesamt","Offensiv","Defensiv","Passprofil"])
+tab1,tab2 = st.tabs(["Offensiv","Passprofil"])
 if on:
     with tab1:
-        st.text("in Arbeit")
-    with tab2:
         st.subheader("Offensivstatistiken",divider = "gray")
         option = st.selectbox("Wähle das Team, dessen Offensivstatistiken dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
         index = df[df["Squad"] == option].index[0]
         if option == df.loc[index,"Squad"]:
             st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)        
-    with tab3:
-        st.text("in Arbeit")
-    
+    with tab2:
+        st.subheader("Passstatistiken",divider = "gray")
+        option = st.selectbox("Wähle das Team, dessen Passstatistiken  dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
+        index = df[df["Squad"] == option].index[0]
+        if option == df.loc[index,"Squad"]:
+            st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)
 else:
     with tab1:
-        st.text("in Arbeit")
-    with tab2:
+
         st.subheader("Offensivstatistiken",divider = "gray")
         subcol1, subcol2 = st.columns(2,gap = "small")
         with subcol1:
@@ -656,10 +874,16 @@ else:
             index = df[df["Squad"] == option].index[0]
             if option == df.loc[index,"Squad"]:
                 st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)
-    with tab3:
-        st.text("in Arbeit")
-
-            
-    
-        
-
+    with tab2:
+        st.subheader("Passstatistiken",divider = "gray")
+        subcol1, subcol2 = st.columns(2,gap = "small")
+        with subcol1:
+            option = st.selectbox("Wähle das Team, dessen Passstatistiken links dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
+            index = df[df["Squad"] == option].index[0]
+            if option == df.loc[index,"Squad"]:
+                st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)
+        with subcol2:
+            option = st.selectbox("Wähle das Team, dessen Passstatistiken rechts dargestellt werden sollen",options = df["Squad"].sort_values(),index = 0)
+            index = df[df["Squad"] == option].index[0]
+            if option == df.loc[index,"Squad"]:
+                st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)        
