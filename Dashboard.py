@@ -12,7 +12,7 @@ directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Lo
 # layout 
 st.set_page_config(layout="wide")
 #%% Tabellen einlesen
-@st.cache_data
+@st.cache_data(ttl=3600*12)
 def load_data():
 # Daten von der Website einlesen
     all_tables = pd.read_html("https://fbref.com/en/comps/33/2-Bundesliga-Stats")
@@ -133,7 +133,7 @@ def load_data():
     df['passing.LongPct'] = (100*df['passing.Long.Att'].div(df['passing.Total.Att'])).round(1)
     return df
 #%% Spieltage einlesen
-@st.cache_data
+@st.cache_data(ttl=3600*12)
 def matchdays():
     temp = pd.read_html("https://fbref.com/en/comps/33/schedule/2-Bundesliga-Scores-and-Fixtures")
     md = temp[0]
@@ -638,8 +638,6 @@ images = images()
 # Bilder in die Tabelle laden
 md['Heimlogo'] = None
 md['Auswärtslogo'] = None
-md['Heimlogo2'] = None
-md['Auswärtslogo2'] = None
 for index, row in md.iterrows():
     imagename_home = row['Heim'] + ".png"
     imagename_away = row['Auswärts'] + ".png"
@@ -648,49 +646,56 @@ for index, row in md.iterrows():
 
 
 
-# Style der Tabellen
-tablestyle = """
-            <style>
-            th {
-                border: 2px solid white;}
-            thead{
-                border-right: 2px solid white;
-                }
-            tbody tr:first-child th,
-            tbody tr:nth-child(2) th{
-                background-color: #66e373;
-                }
-            tbody tr:nth-child(3) th{
-                background-color: #a3f0ab;
-                }
-            tbody tr:nth-child(17) th,
-            tbody tr:nth-child(18) th{
-                background-color: #fc8326;
-                }
-            tbody tr:nth-child(16) th{
-                background-color: #f5bd73;
-                }
 
-            tbody tr {
-                color:black;
-                border:2px solid white;
-                ;}
-            tbody tr:nth-child(odd){
-                background: #f7f7f7;
-               }
-            th{
-                font-weight:bold !important
-                }
-            </style>
-            """
 hidefullscreen =    '''
                     <style>
                     button[title="View fullscreen"]{
-                        visibility: hidden;}
+                       { visibility: hidden;}
                     </style>
                     '''
+#%% Tabellen Styles
+
+Tabelle_style = [{'selector':'th',
+                   'props':[("border","2px solid white"),('font-weight','bold')]},
+                  {'selector':'tbody tr',
+                   'props':[('color','black')]},
+                  {'selector':'tbody tr:first-child th',
+                   'props':[('background-color','#66e373')]},
+                  {'selector':'tbody tr:nth-child(2) th',
+                   'props':[('background-color','#66e373')]},
+                  {'selector':'tbody tr:nth-child(3) th',
+                   'props':[('background-color','#a3f0ab')]},
+                  {'selector':'tbody tr:nth-child(16) th',
+                   'props':[('background-color','#f5bd73')]},
+                  {'selector':'tbody tr:nth-child(17) th',
+                   'props':[('background-color','#fc8326')]},
+                  {'selector':'tbody tr:nth-child(18) th',
+                   'props':[('background-color','#fc8326')]},
+                  {'selector':'tbody tr:nth-child(odd)',
+                   'props':[('background-color','#f7f7f7')]},
+                  {'selector':'tbody tr td',
+                   'props':[('color','black'),('border','2px solid white')]}]
+
+
+md_small = md[["Spieltag","Tag","Anstoß","Heim","Ergebnis","Auswärts"]]
+md_small_style = [{'selector':'td:nth-child(6)',
+                   'props':[('font-weight','bold'),("text-align","center")]},
+                  {'selector':'td:nth-child(4)',
+                   'props':[('background-color','#f7f7f7'),('border-right','2px solid #f7f7f7')]},
+                  {'selector':'td:nth-child(3)',
+                   'props':[('background-color','#f7f7f7'),('border-right','2px solid #f7f7f7')]},
+                  {'selector':'tbody tr td',
+                   'props':[('color','black'),('border-left','2px solid white'),('border-right','2px solid white')]},
+                  {'selector':'th',
+                  'props':[('display','none')]},
+                  {'selector':'td:nth-child(2)',
+                  'props':[('display','none')]},
+                  {'selector':'td:nth-child(4)',
+                  'props':[('border-right','2px solid black')]}]
+
                     
 #%% Hier fängt das Dashboard an
+
 st.title("Zweitliga-Dashboard")
         
 col1,col2 = st.columns((3,2),gap= "medium")
@@ -700,22 +705,9 @@ with col1:
     st.subheader("Tabelle",divider = "rainbow")
     on = st.toggle("Zeige Details")
     if on:  
-        st.table(Tabelle)
-        st.markdown(tablestyle,unsafe_allow_html=True)
-        st.markdown("""
-                    <style>
-                    tbody td:nth-child(10){
-                        font-weight:bold}
-                    """,unsafe_allow_html=True)
+        st.table(Tabelle.style.set_table_styles(Tabelle_style))
     else:
-        st.table(Tabelle_slim)
-        st.markdown(tablestyle,unsafe_allow_html=True)
-        st.markdown(hidefullscreen,unsafe_allow_html=True)
-        st.markdown("""
-                    <style>
-                    tbody td:nth-child(5){
-                        font-weight:bold}
-                    """,unsafe_allow_html=True)
+        st.table(Tabelle_slim.style.set_table_styles(Tabelle_style))
     st.subheader("Spieltag",divider = "rainbow")
     on = st.toggle("Zeige Details",key = "md-toogle_mobile")
     Start_index = df['MP'].max()
@@ -754,22 +746,8 @@ with col1:
                                          })
     else:
         st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
-        st.dataframe(md[md["Spieltag"] == Spieltag],
-                     hide_index=True,height = 360,
-                     column_order=("Tag","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
-                     column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                    'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
-                                    'Anstoß':'Zeit',
-                                    'Ergebnis':""})
-        st.markdown("""
-                    <style>
-                    div.s1jz82f8{
-                        pointer-events: none;}
-                    </style>
-                    """,unsafe_allow_html=True)
-        st.markdown(hidefullscreen,unsafe_allow_html=True)
-        
-
+        st.table(md_small[md_small["Spieltag"] == Spieltag].style.set_table_styles(md_small_style))
+     
     
 
 
