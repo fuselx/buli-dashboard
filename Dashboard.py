@@ -164,13 +164,77 @@ def matchdays():
     md['Datum'] = pd.to_datetime(md['Datum']).dt.strftime('%d.%m.%Y')
     md['Spieltag'] = md['Spieltag'].astype('int')
     md['Zuschauer'] = pd.to_numeric(md['Zuschauer'])
-    md['Ergebnis'] = md['Ergebnis'].fillna("-:-")
+#    md['Ergebnis'] = md['Ergebnis'].fillna("-:-")
     md['Anstoß'] = md['Anstoß'].fillna("tbd")
     md = md.replace(np.nan, 0)
     md['Zuschauer'] = md['Zuschauer'].astype('int')
     md = md.replace(0, "")
     md = md.drop(['Venue','Match Report','Notes'],axis = 1)
     return md
+
+# Spieltage
+md = matchdays()
+
+#%% Selbstgemachte Tabelle nach Spieltagen
+def Tabelle_md(df,md = 34):
+    
+    df_copy = df[df.loc[:,'Spieltag'] <= md]  
+    all_teams = set(df_copy['Heim'].unique()).union(set(df_copy['Auswärts'].unique()))
+    spiele = []
+    for team in all_teams:
+        mp = df_copy[(df_copy['Heim'] == team) | (df_copy['Auswärts'] == team)]['Ergebnis'].count()
+        spiele.append(mp)
+    
+    
+    # aus dem string 'Ergebnis' die Variablen ToreHeim und ToreAuswärts generieren
+    df_copy.loc[:,'ToreHeim']=df_copy.loc[:,'Ergebnis'].str[0]
+    df_copy.loc[:,'ToreHeim'] = df_copy.loc[:,'ToreHeim'].astype('float64')
+    df_copy.loc[:,'ToreAuswärts']=df_copy.loc[:,'Ergebnis'].str[2]
+    df_copy.loc[:,'ToreAuswärts'] = df_copy.loc[:,'ToreAuswärts'].astype('float64')
+    
+    # Auf der Basis PunkteHeim und PunkteAuswärts generieren
+    df_copy['PunkteHeim'] = np.where(df_copy['ToreHeim'] == df_copy['ToreAuswärts'], 1, np.where(df_copy['ToreHeim'] > df_copy['ToreAuswärts'], 3, 0))
+    df_copy['PunkteAuswärts'] = np.where(df_copy['ToreHeim'] == df_copy['ToreAuswärts'], 1, np.where(df_copy['ToreHeim'] < df_copy['ToreAuswärts'], 3, 0))
+    
+    # Und so eine Summe für jedes Team für Punkte und Tore berechnen 
+    punkte = []
+    for team in all_teams:
+        points = sum(df_copy[df_copy['Heim'] == team]['PunkteHeim'])+sum(df_copy[df_copy['Auswärts'] == team]['PunkteAuswärts'])
+        punkte.append(points)
+        
+    tordifferenz = []
+    tore = []
+    gegentore = []  
+    
+    for team in all_teams:
+        Heimtore = df_copy[df_copy['Heim'] == team]['ToreHeim'].fillna(0).sum()
+        Heimgegentore = df_copy[df_copy['Heim'] == team]['ToreAuswärts'].fillna(0).sum()
+        
+        Auswärtstore = df_copy[df_copy['Auswärts'] == team]['ToreAuswärts'].fillna(0).sum()
+        Auswärtsgegentore = df_copy[df_copy['Auswärts'] == team]['ToreHeim'].fillna(0).sum()
+        
+        goals = Heimtore + Auswärtstore
+        goals = goals.astype('int')
+        tore.append(goals)
+        goalsag = Heimgegentore + Auswärtsgegentore
+        goalsag = goalsag.astype('int')
+        gegentore.append(goalsag)
+        goaldif = Heimtore + Auswärtstore - Heimgegentore - Auswärtsgegentore
+        goaldif = goaldif.astype('int')
+        tordifferenz.append(goaldif)
+        
+    
+    # Jetzt die Teams aus df herausfinden. Dafür reichen einfach die unique values in df['Heim']
+    # Dazu werden Punkte und Tordifferenz gegebeben und richtig sortiert.
+    Tabelle_md = pd.DataFrame({'Team':list(all_teams),
+                            'Spieltag':mp,
+                            'Tore':tore,
+                            'Gegentore':gegentore,
+                            'Tordifferenz':tordifferenz,
+                            'Punkte':punkte}).sort_values(by=['Punkte','Tordifferenz'],ascending=False)
+    Tabelle_md.loc[:,"Platz"] = range(1,19)
+    return Tabelle_md
+
 
 #%% Import der Bilder, als Objekt speichern
 @st.cache_data
@@ -627,10 +691,36 @@ Tabelle_slim.rename(columns = {
     'Punkte':'Pkt'},inplace = True)
 Tabelle_slim.set_index('#', inplace=True)
 Tabelle.set_index('Platz', inplace=True)
-# Spieltage
-md = matchdays()
 
 
+#%%
+# Liste, um Tabelle für Spieltage zu sammeln
+list_Tabellen_md = []
+# Einen DF pro Spieltag erstellen
+bis = Tabelle.loc[1,"Spiele"]+1
+for matchday in range(1, bis):  
+    Tabellen_md = Tabelle_md(md, md = matchday)
+    list_Tabellen_md.append(Tabellen_md)
+
+# Alle zu einem df vereinen, was späteres Handling erleichtert
+Tabellen_md = pd.concat(list_Tabellen_md,ignore_index=True).sort_values(by=['Team','Spieltag'])
+
+#%% Graph für Saisonverlauf erstellen erstellen
+def season(var):
+    Vereinsfarben = ["#FBC910","#e30511", "black","#009d3b","#1e5cb3","#149c33","#006eb8","#014e9f","#00579c","#e30511","#004c94",
+                     "#0169b9","#aa1025","#562b86","#1962b9","#014b9d","#614837","#b88748"] #alphabetische Reihenfole der Teams
+    fig = px.line(Tabellen_md,
+                  x = "Spieltag",
+                  y=var,
+                  color="Team",
+                  markers = True,
+                  range_y=(18.5,0.5),
+                  range_x=(0.5,34.5),
+                  line_shape="linear",
+                  color_discrete_sequence=Vereinsfarben)
+    fig.update_layout(plot_bgcolor = "white")
+    fig.update_yaxes(gridcolor = "#cdd1cf",tick0=18,dtick=1)
+    return fig
 
 # Bilder laden
 images = images()
@@ -650,9 +740,11 @@ for index, row in md.iterrows():
 hidefullscreen =    '''
                     <style>
                     button[title="View fullscreen"]{
-                       { visibility: hidden;}
+                       { display: none;}
                     </style>
                     '''
+                    
+
 #%% Tabellen Styles
 
 Tabelle_style = [{'selector':'th',
@@ -678,7 +770,29 @@ Tabelle_style = [{'selector':'th',
 
 
 md_small = md[["Spieltag","Tag","Anstoß","Heim","Ergebnis","Auswärts"]]
-md_small_style = [{'selector':'td:nth-child(6)',
+Abkürzungen = {"Paderborn":"SCP",
+               "Schalke 04":"S04",
+               "Hamburger SV":"HSV",
+               "Düsseldorf":"F95",
+               "Hansa Rostock":"FCH",
+               "Braunschweig":"EBS",
+               "Hannover 96":"H96",
+               "Wiesbaden":"WIE",
+               "Karlsruhe":"KSC",
+               "Holstein Kiel":"KSV",
+               "Hertha BSC":"BSC",
+               "St. Pauli":"STP",
+               "Elversberg":"ELV",
+               "Greuther Fürth":"SGF",
+               "Nürnberg":"FCN",
+               "Magdeburg":"FCM",
+               "Osnabrück":"OSN",
+               "Kaiserslautern":"FCK"}
+md_small.loc[:,'Heim'] = md_small.loc[:,'Heim'].replace(Abkürzungen)
+md_small.loc[:,'Auswärts'] = md_small.loc[:,'Auswärts'].replace(Abkürzungen)
+md_small_style = [{'selector':'tbody',
+                   'props':[('font-size',"14px")]},
+                  {'selector':'td:nth-child(6)',
                    'props':[('font-weight','bold'),("text-align","center")]},
                   {'selector':'td:nth-child(4)',
                    'props':[('background-color','#f7f7f7'),('border-right','2px solid #f7f7f7')]},
@@ -695,29 +809,25 @@ md_small_style = [{'selector':'td:nth-child(6)',
 
                     
 #%% Hier fängt das Dashboard an
-
+st.markdown(hidefullscreen, unsafe_allow_html = True)
 st.title("Zweitliga-Dashboard")
+st.header("",divider = "rainbow")
         
 col1,col2 = st.columns((3,2),gap= "medium")
 
 
 with col1:
-    st.subheader("Tabelle",divider = "rainbow")
+  #  st.subheader("Tabelle",divider = "rainbow")
     on = st.toggle("Zeige Details")
     if on:  
         st.table(Tabelle.style.set_table_styles(Tabelle_style))
     else:
         st.table(Tabelle_slim.style.set_table_styles(Tabelle_style))
-    st.subheader("Spieltag",divider = "rainbow")
-    on = st.toggle("Zeige Details",key = "md-toogle_mobile")
+ #   st.subheader("Spieltag",divider = "rainbow")
+    st.divider()
     Start_index = df['MP'].max()
-    Spieltag = st.slider("Wähle den Spieltag",min_value=1,max_value=34,value=Start_index,key="original")
-    st.markdown("""
-                   <style>
-                   .css-1dx1gwv{
-                       display:none}
-                   </style>
-                   """, unsafe_allow_html=True)
+    Spieltag = st.slider("",min_value=1,max_value=34,value=Start_index,key="original")
+    on = st.toggle("Zeige Details",key = "md-toogle_mobile")
     if on:        
         if Spieltag > df.loc[0,'MP']:
                 st.dataframe(md[md["Spieltag"] == Spieltag],
@@ -747,13 +857,28 @@ with col1:
     else:
         st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
         st.table(md_small[md_small["Spieltag"] == Spieltag].style.set_table_styles(md_small_style))
+    st.divider()    
+    tab1,tab2 = st.tabs(["Offensiv","Passprofil"])
+
+    with tab1:
+       #  st.subheader("Offensivstatistiken",divider = "gray")
+         option = st.selectbox("Wähle das Team, dessen Offensivstatistiken dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
+         index = df[df["Squad"] == option].index[0]
+         if option == df.loc[index,"Squad"]:
+             st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)        
+    with tab2:
+       #  st.subheader("Passstatistiken",divider = "gray")
+         option = st.selectbox("Wähle das Team, dessen Passstatistiken  dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
+         index = df[df["Squad"] == option].index[0]
+         if option == df.loc[index,"Squad"]:
+             st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)   
      
     
 
 
 with col2:
-    st.subheader("Eindimensionale Statistiken",divider = "rainbow")
-    option = st.selectbox("Wähle die Statistik, die als Balkendiagramm dargestellt werden soll",options=["Expected Goals pro Spiel",
+ #   st.subheader("Statistiken",divider = "rainbow")
+    option = st.selectbox("",options=["Expected Goals pro Spiel",
                                                                                                          "Expected Goals pro Spiel (ohne 11m)",
                                                                                                          "Expected Goals against pro Spiel",
                                                                                                          "Tore",
@@ -778,9 +903,9 @@ with col2:
     elif option == "Lange Bälle":
         st.pyplot(hbar(df,"passing.LongPct","Anteil langer Bälle an allen Pässen (in %)",pergame = False))
         st.caption("Pässe über eine Distanz von mehr als 32 Metern")
-    
-    st.subheader("Zweidimensionale Statistiken",divider = "rainbow")
-    option = st.selectbox("Wähle die Statistik, die als Streudiagramm dargestellt werden soll", options = ['Schüsse',
+    st.divider()
+ #   st.subheader("Zweidimensionale Statistiken",divider = "rainbow")
+    option = st.selectbox("", options = ['Schüsse',
                                                                                                            'Expected Goals',
                                                                                                            'Tordifferenz vs. xG',
                                                                                                            'Ballbesitz vs. Kontakte im Strafraum',
@@ -819,49 +944,5 @@ with col2:
     if option == "Offensivstandards":
         st.pyplot(scatter(df,"creation.SCA Types.PassDead","creation.GCA Types.PassDead",
                           title = "Offensivstandards",xlab = "Chancen nach Standardsituationen",ylab = "Tore nach Standardsituationen"))
-
-
-st.header("Teamvergleich",divider = "rainbow") 
-on = st.toggle("Mobil-Version",key = "vergleich")
-tab1,tab2 = st.tabs(["Offensiv","Passprofil"])
-if on:
-    with tab1:
-        st.subheader("Offensivstatistiken",divider = "gray")
-        option = st.selectbox("Wähle das Team, dessen Offensivstatistiken dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
-        index = df[df["Squad"] == option].index[0]
-        if option == df.loc[index,"Squad"]:
-            st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)        
-    with tab2:
-        st.subheader("Passstatistiken",divider = "gray")
-        option = st.selectbox("Wähle das Team, dessen Passstatistiken  dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
-        index = df[df["Squad"] == option].index[0]
-        if option == df.loc[index,"Squad"]:
-            st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)
-else:
-    with tab1:
-
-        st.subheader("Offensivstatistiken",divider = "gray")
-        subcol1, subcol2 = st.columns(2,gap = "small")
-        with subcol1:
-            option = st.selectbox("Wähle das Team, dessen Offensivstatistiken links dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
-            index = df[df["Squad"] == option].index[0]
-            if option == df.loc[index,"Squad"]:
-                st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)
-        with subcol2:
-            option = st.selectbox("Wähle das Team, dessen Offensivstatistiken rechts dargestellt werden sollen",options = df["Squad"].sort_values(),index = 0)
-            index = df[df["Squad"] == option].index[0]
-            if option == df.loc[index,"Squad"]:
-                st.plotly_chart(radar_off(df,df.loc[index,'Squad']),use_container_width=True)
-    with tab2:
-        st.subheader("Passstatistiken",divider = "gray")
-        subcol1, subcol2 = st.columns(2,gap = "small")
-        with subcol1:
-            option = st.selectbox("Wähle das Team, dessen Passstatistiken links dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
-            index = df[df["Squad"] == option].index[0]
-            if option == df.loc[index,"Squad"]:
-                st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)
-        with subcol2:
-            option = st.selectbox("Wähle das Team, dessen Passstatistiken rechts dargestellt werden sollen",options = df["Squad"].sort_values(),index = 0)
-            index = df[df["Squad"] == option].index[0]
-            if option == df.loc[index,"Squad"]:
-                st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)        
+    st.divider()
+    st.plotly_chart(season("Platz"),use_container_width=True)
