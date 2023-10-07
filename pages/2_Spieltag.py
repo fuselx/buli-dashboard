@@ -128,7 +128,7 @@ for index, row in md.iterrows():
     md.loc[index,'Auswärtslogo'] = directory + imagename_away 
 #%% Dashboard
 st.subheader("Spieltage",divider = "rainbow")
-Start_index = 9-1
+Start_index = len(mdSubset[(mdSubset["Heim"] == "Hannover 96")|(mdSubset["Auswärts"] == "Hannover 96")]) # aktuelle Anzahl von Spielen
 on = st.toggle("Smartphone-Version",key = "md-toogle_mobile")
 Spieltag = st.selectbox("",options = range(1,35),index=Start_index)
 if on:
