@@ -8,10 +8,12 @@ from PIL import Image
 
 st.set_page_config(
     page_title="Spieltage",
-    page_icon="⌚"
+    page_icon="⌚",
+    layout="wide"
 )
 
 st.sidebar.success("Wähle aus der Liste oben den Punkt aus, den Du Dir anschauen möchtest!")
+
 
 directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
 #%% Spieltage einlesen
@@ -49,22 +51,16 @@ def matchdays():
     md['Ergebnis'] = md['Ergebnis'].fillna("-:-")
     md['Anstoß'] = md['Anstoß'].fillna("tbd")
     md = md.replace(np.nan, 0)
-    md['Zuschauer'] = md['Zuschauer'].astype('int')
-    md['Zuschauer'] = md['Zuschauer'].replace(0,"")
     md['Schiedsrichter'] = md['Schiedsrichter'].replace(0,"")
-    md = md.replace(0,np.nan) 
+    md = md.replace(0,np.nan)
+    md['xG'] = md['xG'].replace(np.nan,0)
+    md['xG '] = md['xG '].replace(np.nan,0)
     md = md.drop(['Venue','Match Report','Notes'],axis = 1)
     return md
 
 # Spieltage
 md = matchdays()
 mdSubset = md[md['Ergebnis'] != "-:-" ]
-
-#%% Spielplan für jedes Team
-def Spielplan(team):
-    SpielplanTeam = md[(md['Heim'] == team)|(md["Auswärts"] == team)]
-    return SpielplanTeam
-
   
 #%% Dataframes formatieren
 # Kleiner md-Datensatz für Handy-Version
@@ -134,18 +130,18 @@ for index, row in md.iterrows():
 st.subheader("Spieltage",divider = "rainbow")
 Start_index = mdSubset["Spieltag"].max()
 on = st.toggle("Smartphone-Version",key = "md-toogle_mobile")
-Spieltag = st.selectbox("",options = md["Spieltag"].unique(),index=Start_index-1)
+Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1)
 if on:
    st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
    st.table(md_small[md_small["Spieltag"] == Spieltag].style.set_table_styles(md_small_style))        
 else:
-    if Spieltag > Start_index:
-            st.dataframe(md[md["Spieltag"] == Spieltag],
-                         hide_index=True,height = 360,
-                         column_order=("Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
-                         column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                        'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small")})
-    else:
+#    if Spieltag > Start_index:
+#            st.dataframe(md[md["Spieltag"] == Spieltag],
+#                         hide_index=True,height = 360,
+#                         column_order=("Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
+#                         column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+#                                        'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small")})
+#    else:
             st.dataframe(md[md["Spieltag"] == Spieltag],
                          hide_index=True,
                          height = 360,
@@ -155,32 +151,32 @@ else:
                                         'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
                                         'xG':st.column_config.ProgressColumn(
                                             min_value=0,
-                                            max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                            max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
                                             format = "  %f",
                                             width = "small"),
                                         'xG ':st.column_config.ProgressColumn(
-                                            min_value=0,
-                                            max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                            format = "  %f",
-                                            width = "small")                                            
+                                             min_value=0,
+                                             max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                             format = "  %f",
+                                             width = "small")                                            
                                      })
 st.divider()            
 st.subheader("Spielpläne einzelner Teams")
-option = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].unique(),index = 1)
-st.dataframe(Spielplan(option),
-             hide_index=True,
-             height = 1240,
-             column_order=("Spieltag","Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
-             column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                            'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
-                            'xG':st.column_config.ProgressColumn(
-                                min_value=0,
-                                max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                format = "  %f",
-                                width = "small"),
-                            'xG ':st.column_config.ProgressColumn(
-                                min_value=0,
-                                max_value=md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                format = "  %f",
-                                width = "small")                                            
-                         })
+team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].unique(),index = 1)
+st.dataframe(md[(md['Heim'] == team)|(md["Auswärts"] == team)],
+                 hide_index=True,
+                 height = 1240,
+                 column_order=("Spieltag","Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
+                 column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+                                'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
+                                'xG':st.column_config.ProgressColumn(
+                                    min_value=0,
+                                    max_value=3.5,
+                                    format = "  %f",
+                                    width = "small"),
+                                'xG ':st.column_config.ProgressColumn(
+                                    min_value=0,
+                                    max_value=3.5,
+                                    format = "  %f",
+                                    width = "small")                                            
+                             })
