@@ -146,60 +146,57 @@ for index, row in md.iterrows():
     md.loc[index,'Heimlogo'] = directory + imagename_home
     md.loc[index,'Auswärtslogo'] = directory + imagename_away 
 #%% Dashboard
-st.subheader("Spieltage",divider = "rainbow")
-Start_index = len(mdSubset[(mdSubset["Heim"] == "Hannover 96")|(mdSubset["Auswärts"] == "Hannover 96")]) # aktuelle Anzahl von Spielen
-on = st.toggle("Smartphone-Version",key = "md-toogle_mobile")
-Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1)
-if on:
-   st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
-   st.table(md_small[md_small["Spieltag"] == Spieltag].style.set_table_styles(md_small_style))        
-else:
-#    if Spieltag > Start_index:
-#            st.dataframe(md[md["Spieltag"] == Spieltag],
-#                         hide_index=True,height = 360,
-#                         column_order=("Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"),
-#                         column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-#                                        'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small")})
-#    else:
-            st.dataframe(md[md["Spieltag"] == Spieltag],
+col1,col2,col3 = st.columns((1,3,1))
+with col2:
+    st.subheader("Spieltage",divider = "rainbow")
+    Start_index = len(mdSubset[(mdSubset["Heim"] == "Hannover 96")|(mdSubset["Auswärts"] == "Hannover 96")]) # aktuelle Anzahl von Spielen
+    on = st.toggle("Smartphone-Version",key = "md-toogle_mobile")
+#    Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1)
+    if on:
+       Spieltag = st.slider("",min_value=1,max_value=34,value=Start_index)
+       st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
+       st.table(md_small[md_small["Spieltag"] == Spieltag].style.set_table_styles(md_small_style))        
+    else:
+                Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1)
+                st.dataframe(md[md["Spieltag"] == Spieltag],
+                             hide_index=True,
+                             height = 360,
+                             column_order=("Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
+                             column_config={'Spieltag':None,
+                                            'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+                                            'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
+                                            'xG':st.column_config.ProgressColumn(
+                                                min_value=0,
+                                                max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                                format = "  %f",
+                                                width = "small"),
+                                            'xG ':st.column_config.ProgressColumn(
+                                                 min_value=0,
+                                                 max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                                 format = "  %f",
+                                                 width = "small")                                            
+                                         })
+    st.divider()
+    st.subheader("Spielpläne einzelner Teams")
+    if on:
+        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md_spielplan_small["Heim"].unique(),index = 1)
+        st.table(md_spielplan_small[(md_spielplan_small['Heim'] == team)|(md_spielplan_small["Auswärts"] == team)].style.set_table_styles(md_spielplan_small_style)) 
+    else:  
+        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].unique(),index = 1)     
+        st.dataframe(md[(md['Heim'] == team)|(md["Auswärts"] == team)],
                          hide_index=True,
-                         height = 360,
-                         column_order=("Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
-                         column_config={'Spieltag':None,
-                                        'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+                         height = 1240,
+                         column_order=("Spieltag","Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
+                         column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
                                         'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
                                         'xG':st.column_config.ProgressColumn(
                                             min_value=0,
-                                            max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                            max_value=3.5,
                                             format = "  %f",
                                             width = "small"),
                                         'xG ':st.column_config.ProgressColumn(
-                                             min_value=0,
-                                             max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                             format = "  %f",
-                                             width = "small")                                            
+                                            min_value=0,
+                                            max_value=3.5,
+                                            format = "  %f",
+                                            width = "small")                                            
                                      })
-st.divider()
-st.subheader("Spielpläne einzelner Teams")
-if on:
-    team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md_spielplan_small["Heim"].unique(),index = 1)
-    st.table(md_spielplan_small[(md_spielplan_small['Heim'] == team)|(md_spielplan_small["Auswärts"] == team)].style.set_table_styles(md_spielplan_small_style)) 
-else:  
-    team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].unique(),index = 1)     
-    st.dataframe(md[(md['Heim'] == team)|(md["Auswärts"] == team)],
-                     hide_index=True,
-                     height = 1240,
-                     column_order=("Spieltag","Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
-                     column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                    'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
-                                    'xG':st.column_config.ProgressColumn(
-                                        min_value=0,
-                                        max_value=3.5,
-                                        format = "  %f",
-                                        width = "small"),
-                                    'xG ':st.column_config.ProgressColumn(
-                                        min_value=0,
-                                        max_value=3.5,
-                                        format = "  %f",
-                                        width = "small")                                            
-                                 })
