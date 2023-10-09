@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+st.set_page_config(layout="centered")
 #%% Tatsächliches Dashboard
-st.set_page_config(
-    page_title="Start",
-    page_icon="🏠"
-)
 st.write("# Willkommen auf Volkers zweitklassigem Fußball-Dashboard!")
 
 st.sidebar.success("Wähle aus der Liste oben den Punkt aus, den Du Dir anschauen möchtest!")
+mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
+if "mobile_on" not in st.session_state:
+    st.session_state.mobile_on = False
 
 st.markdown(
     """
