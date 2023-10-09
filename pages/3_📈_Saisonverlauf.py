@@ -143,7 +143,7 @@ def season_rank():
                   range_x=(0.5,34.5),
                   line_shape="linear",
                   color_discrete_sequence=Vereinsfarben,
-                  height=400)
+                  height=500)
     fig.update_layout(plot_bgcolor = "white")
     fig.update_yaxes(gridcolor = "#cdd1cf",tick0=18,dtick=1)
     fig.update_xaxes(minor=dict(ticklen=4, tickcolor="#cdd1cf", showgrid=False),title_text='')
@@ -162,7 +162,7 @@ def season(var):
                   range_x=(0.5,34.5),
                   line_shape="linear",
                   color_discrete_sequence=Vereinsfarben,
-                  height=400)
+                  height=500)
     fig.update_layout(plot_bgcolor = "white")
     fig.update_yaxes(gridcolor = "#cdd1cf",tick0=0,dtick=1)
     fig.update_xaxes(minor=dict(ticklen=4, tickcolor="#cdd1cf", showgrid=False),title_text='')
