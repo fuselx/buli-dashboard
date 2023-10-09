@@ -61,66 +61,7 @@ def matchdays():
 # Spieltage
 md = matchdays()
 mdSubset = md[md['Ergebnis'] != "-:-" ]
-  
-#%% Dataframes formatieren
-# Kleiner md-Datensatz für Handy-Version
-md_small = md[["Spieltag","Tag","Anstoß","Heim","Ergebnis","Auswärts"]]
-Abkürzungen = {"Paderborn":"SCP",
-               "Schalke 04":"S04",
-               "Hamburger SV":"HSV",
-               "Düsseldorf":"F95",
-               "Hansa Rostock":"FCH",
-               "Braunschweig":"EBS",
-               "Hannover 96":"H96",
-               "Wiesbaden":"WIE",
-               "Karlsruhe":"KSC",
-               "Holstein Kiel":"KSV",
-               "Hertha BSC":"BSC",
-               "St. Pauli":"STP",
-               "Elversberg":"ELV",
-               "Greuther Fürth":"SGF",
-               "Nürnberg":"FCN",
-               "Magdeburg":"FCM",
-               "Osnabrück":"OSN",
-               "Kaiserslautern":"FCK"}
-md_small.loc[:,'Heim'] = md_small.loc[:,'Heim'].replace(Abkürzungen)
-md_small.loc[:,'Auswärts'] = md_small.loc[:,'Auswärts'].replace(Abkürzungen)
-md_small_style = [{'selector':'tbody',
-                   'props':[('font-size',"14px")]},
-                  {'selector':'td:nth-child(6)',
-                   'props':[('font-weight','bold'),("text-align","center")]},
-                  {'selector':'td:nth-child(4)',
-                   'props':[('background-color','#f7f7f7'),('border-right','2px solid #f7f7f7')]},
-                  {'selector':'td:nth-child(3)',
-                   'props':[('background-color','#f7f7f7'),('border-right','2px solid #f7f7f7')]},
-                  {'selector':'tbody tr td',
-                   'props':[('color','black'),('border-left','2px solid white'),('border-right','2px solid white')]},
-                  {'selector':'th',
-                  'props':[('display','none')]},
-                  {'selector':'td:nth-child(2)',
-                  'props':[('display','none')]},
-                  {'selector':'td:nth-child(4)',
-                  'props':[('border-right','2px solid black')]}]
-md_spielplan_small = md[["Spieltag","Datum","Tag","Anstoß","Heim","Ergebnis","Auswärts"]]
-md_spielplan_small['Heim'] = md_spielplan_small['Heim'].replace(Abkürzungen)
-md_spielplan_small['Auswärts'] = md_spielplan_small['Auswärts'].replace(Abkürzungen)
-md_spielplan_small['Datum'] =  pd.to_datetime(md_spielplan_small['Datum']).dt.strftime('%d.%m.%y')
-md_spielplan_small_style = [{'selector':'tbody',
-                   'props':[('font-size',"14px")]},
-                  {'selector':'td:nth-child(7)',
-                   'props':[('font-weight','bold'),("text-align","center")]},
-                  {'selector':'td:nth-child(4)',
-                   'props':[('font-style','italic')]},
-                  {'selector':'td:nth-child(3)',
-                   'props':[('font-style','italic')]},
-                  {'selector':'td:nth-child(5)',
-                   'props':[('font-style','italic')]},
-                  {'selector':'tbody tr td',
-                   'props':[('color','black'),('border-left','2px solid white'),('border-right','2px solid white')]},
-                  {'selector':'th',
-                  'props':[('display','none')]},
-                  {'selector':'td:nth-child(5)',
-                  'props':[('border-right','2px solid black')]}]
+
 #%% Bilder laden
 @st.cache_data
 def images():
@@ -136,15 +77,59 @@ def images():
 
 # Bilder laden
 images = images()
+def table_images():
+    # Bilder in die Tabelle laden
+    md['Heimlogo'] = None
+    md['Auswärtslogo'] = None
+    for index, row in md.iterrows():
+        imagename_home = row['Heim'] + ".png"
+        imagename_away = row['Auswärts'] + ".png"
+        md.loc[index,'Heimlogo'] = directory + imagename_home
+        md.loc[index,'Auswärtslogo'] = directory + imagename_away   
+    return md
 
-# Bilder in die Tabelle laden
-md['Heimlogo'] = None
-md['Auswärtslogo'] = None
-for index, row in md.iterrows():
-    imagename_home = row['Heim'] + ".png"
-    imagename_away = row['Auswärts'] + ".png"
-    md.loc[index,'Heimlogo'] = directory + imagename_home
-    md.loc[index,'Auswärtslogo'] = directory + imagename_away 
+md = table_images()
+#%% Dataframes formatieren
+# Kleiner md-Datensatz für Handy-Version
+md_small = md[["Spieltag","Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"]]
+md_small['Datum'] =  pd.to_datetime(md_small['Datum']).dt.strftime('%d.%m.%y')
+md_small_style = [{'selector':'tbody',
+                   'props':[('font-size',"13px"),('font-weight',"bold"),('color','#565656')]},
+                  {'selector':'td:nth-child(7)',
+                   'props':[('font-weight','bold'),("text-align","center")]},
+                  {'selector':'td:nth-child(2)',
+                   'props':[('border-left','0.1px solid white')]},
+                  {'selector':'td:nth-child(3)',
+                   'props':[('border-right','0.1px solid white')]},
+                  {'selector':'td:nth-child(4)',
+                   'props':[('border-right','0.1px solid white')]},
+                  {'selector':'td:nth-child(6)',
+                   'props':[('border-right','0.1px solid white')]},
+                  {'selector':'td:nth-child(7)',
+                   'props':[('border-right','0.1px solid white')]},
+                  {'selector':'td:nth-child(8)',
+                   'props':[('border-right','0.1px solid white')]},
+                  {'selector':'tr:nth-child(1)',
+                   'props':[('border-top','0.1px solid white')]},
+                  {'selector':'th',
+                  'props':[('display','none')]},
+                  {'selector':'td:nth-child(9)',
+                  'props':[('display','none')]},
+                  {'selector':'td:nth-child(10)',
+                  'props':[('display','none')]}]
+md_spielplan_small = md[["Spieltag","Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo","Heim","Auswärts"]]
+md_spielplan_small['Datum'] =  pd.to_datetime(md_spielplan_small['Datum']).dt.strftime('%d.%m.%y')
+
+# Converting links to html tags
+def path_to_image_html(path):
+    return '<img src="' + path + '" width="27" >'
+
+#convert df to html
+
+def convert_df(input_df):
+     # IMPORTANT: Cache the conversion to prevent computation on every rerun
+     return input_df.to_html(escape=False, formatters=dict(Heimlogo=path_to_image_html,Auswärtslogo=path_to_image_html))
+
 #%% Dashboard
 col1,col2,col3 = st.columns((1,3,1))
 with col2:
@@ -154,8 +139,18 @@ with col2:
 #    Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1)
     if on:
        Spieltag = st.slider("",min_value=1,max_value=34,value=Start_index)
-       st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
-       st.table(md_small[md_small["Spieltag"] == Spieltag].style.set_table_styles(md_small_style))        
+ #      st.write(f"__Spieltag {Spieltag}: {md[md['Spieltag'] == Spieltag].reset_index().loc[0,'Datum']} - {md[md['Spieltag'] == Spieltag].reset_index().loc[7,'Datum']}__")
+       md_small_html =  convert_df(md_small[md_small["Spieltag"] == Spieltag]) 
+       css_string = ''
+       for rule in md_small_style:
+           selector = rule['selector']
+           props = '; '.join([f'{prop[0]}: {prop[1]}' for prop in rule['props']])
+           css_string += f'{selector} {{{props}}}\n'
+       md_small_html_styled =  f'<style>{css_string}</style>{md_small_html}'  
+       st.markdown(
+           md_small_html_styled,
+           unsafe_allow_html=True
+       )         
     else:
                 Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1)
                 st.dataframe(md[md["Spieltag"] == Spieltag],
@@ -176,11 +171,19 @@ with col2:
                                                  format = "  %f",
                                                  width = "small")                                            
                                          })
-    st.divider()
-    st.subheader("Spielpläne einzelner Teams")
+
+    st.subheader("Spielpläne einzelner Teams",divider = "gray")
     if on:
         team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md_spielplan_small["Heim"].unique(),index = 1)
-        st.table(md_spielplan_small[(md_spielplan_small['Heim'] == team)|(md_spielplan_small["Auswärts"] == team)].style.set_table_styles(md_spielplan_small_style)) 
+#        st.table(md_spielplan_small[(md_spielplan_small['Heim'] == team)|(md_spielplan_small["Auswärts"] == team)].style.set_table_styles(md_spielplan_small_style))
+        md_spielplan_small_html = convert_df(md_spielplan_small[(md_spielplan_small['Heim'] == team)|(md_spielplan_small["Auswärts"] == team)])
+        css_string2 = ""
+        md_spielplan_small_html_styled =  f'<style>{css_string2}</style>{md_spielplan_small_html}'
+        st.markdown(
+            md_spielplan_small_html_styled,
+            unsafe_allow_html=True
+        )         
+        
     else:  
         team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].unique(),index = 1)     
         st.dataframe(md[(md['Heim'] == team)|(md["Auswärts"] == team)],
