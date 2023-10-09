@@ -144,7 +144,7 @@ def season_rank():
                   height=600)
     fig.update_layout(plot_bgcolor = "white")
     fig.update_yaxes(gridcolor = "#cdd1cf",tick0=18,dtick=1)
-    fig.update_xaxes(minor=dict(ticklen=4, tickcolor="#cdd1cf", showgrid=False))
+    fig.update_xaxes(minor=dict(ticklen=4, tickcolor="#cdd1cf", showgrid=False),title_text='')
     return fig
 
 #%% Graph für Saisonverlauf erstellen erstellen 
@@ -163,7 +163,7 @@ def season(var):
                   height=600)
     fig.update_layout(plot_bgcolor = "white")
     fig.update_yaxes(gridcolor = "#cdd1cf",tick0=0,dtick=1)
-    fig.update_xaxes(minor=dict(ticklen=4, tickcolor="#cdd1cf", showgrid=False))
+    fig.update_xaxes(minor=dict(ticklen=4, tickcolor="#cdd1cf", showgrid=False),title_text='')
     return fig
 #%% Dashboard Seite
 st.subheader("Saisonverlauf",divider = "rainbow")
@@ -178,12 +178,12 @@ option = st.selectbox("",options=["Platzierung",
                                   "Gegentore"
                                   ])
 if option == "Platzierung":
-    st.plotly_chart(season_rank())
+    st.plotly_chart(season_rank(),use_container_width = True)
 elif option == "Punkte":
-    st.plotly_chart(season("Punkte"))
+    st.plotly_chart(season("Punkte"),use_container_width = True)
 elif option == "Tore":
-    st.plotly_chart(season("Tore"))
+    st.plotly_chart(season("Tore"),use_container_width = True)
 elif option == "Gegentore":
-    st.plotly_chart(season("Gegentore"))
+    st.plotly_chart(season("Gegentore"),use_container_width = True)
 elif option == "Tordifferenz":
-    st.plotly_chart(season("Tordifferenz"))
+    st.plotly_chart(season("Tordifferenz"),use_container_width = True)
