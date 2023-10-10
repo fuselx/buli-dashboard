@@ -128,7 +128,7 @@ md_spielplan['Datum'] =  pd.to_datetime(md_spielplan['Datum']).dt.strftime('%d.%
 
 # Converting links to html tags
 def path_to_image_html(path):
-    return '<img src="' + path + '" width="27" >'
+    return '<img src="' + path + '" width="25" >'
 
 #convert df to html
 def convert_df(input_df):
