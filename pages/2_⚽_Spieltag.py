@@ -94,7 +94,7 @@ md = table_images()
 md_small = md[["Spieltag","Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"]]
 md_small['Datum'] =  pd.to_datetime(md_small['Datum']).dt.strftime('%d.%m.%y')
 md_small_style = [{'selector':'tbody',
-                   'props':[('font-size',"13px"),('color','black')]},
+                   'props':[('font-size',"14px"),('color','black')]},
                   {'selector':'td:nth-child(7)',
                    'props':[('font-weight','bold'),("text-align","center")]},
                   {'selector':'td:nth-child(2)',
