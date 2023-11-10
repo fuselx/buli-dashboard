@@ -8,12 +8,14 @@ from PIL import Image
 st.set_page_config(layout="wide")
 # Session State für Smartphone-Version
 st.session_state.mobile_on = st.session_state.mobile_on
-# Sidebar-Notiz
-st.sidebar.success("Wähle aus der Liste oben den Punkt aus, den Du Dir anschauen möchtest!")
+
 # Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
 mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
 
-
+# Höhe der Sidebar-Liste anpassen
+st.sidebar.markdown("""
+                    <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
+                    """, unsafe_allow_html=True)
 
 directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
 #%% Spieltage einlesen
