@@ -145,12 +145,19 @@ def convert_df(input_df):
      return input_df.to_html(escape=False, formatters=dict(Heimlogo=path_to_image_html,Auswärtslogo=path_to_image_html))
 
 #%% Dashboard
-col1,col2,col3 = st.columns((1,3,1))
+col1,col2,col3 = st.columns((1,7,1))
 with col2:
     st.subheader("Spieltage",divider = "rainbow")
     Start_index = len(mdSubset[(mdSubset["Heim"] == "Hannover 96")|(mdSubset["Auswärts"] == "Hannover 96")]) # aktuelle Anzahl von Spielen
     if mobile_on:
-       Spieltag = st.slider("",min_value=1,max_value=34,value=Start_index)
+       buttonDown,buttonUp,Space = st.columns((2,1,10))
+       with buttonDown:
+           if st.button("⏪"):
+               st.session_state['slider'] -= 1
+       with buttonUp:
+           if st.button("⏩"):
+               st.session_state['slider'] += 1
+       Spieltag = st.slider("",min_value=1,max_value=34,value=Start_index,key="slider",label_visibility="collapsed")
        md_small_html =  convert_df(md_small[md_small["Spieltag"] == Spieltag]) 
        css_string = ''
        for rule in md_small_style:
@@ -163,7 +170,14 @@ with col2:
            unsafe_allow_html=True
        )         
     else:
-                Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1)
+                buttonDown,buttonUp,Space = st.columns((1,1,10))
+                with buttonDown:
+                    if st.button("⏪"):
+                        st.session_state['select'] -= 1
+                with buttonUp:
+                    if st.button("⏩"):
+                        st.session_state['select'] += 1
+                Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1,key="select",label_visibility="collapsed")
                 st.dataframe(md[md["Spieltag"] == Spieltag],
                              hide_index=True,
                              height = 360,
