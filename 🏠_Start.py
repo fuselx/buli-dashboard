@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 st.set_page_config(layout="wide")
-st.sidebar.success("Wähle aus der Liste oben den Punkt aus, den Du Dir anschauen möchtest!")
+
 mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
 if "mobile_on" not in st.session_state:
     st.session_state.mobile_on = False
+    
+# Höhe der Sidebar-Liste anpassen
+st.sidebar.markdown("""
+                    <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
+                    """, unsafe_allow_html=True)
 #%% Tatsächliches Dashboard
 col1,col2,col3 = st.columns((1,3.5,1))
 with col2:
