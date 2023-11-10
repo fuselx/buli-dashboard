@@ -136,11 +136,11 @@ def convert_df(input_df):
      return input_df.to_html(escape=False, formatters=dict(Heimlogo=path_to_image_html,Auswärtslogo=path_to_image_html))
  
 #%%Dashboard  
-col1,col2,col3 = st.columns((1,3,1))
+col1,col2,col3 = st.columns((1,8,1))
 with col2:
     st.subheader("Spielpläne einzelner Teams",divider = "rainbow")
     if mobile_on:
-        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md_spielplan["Heim"].sort_values().unique(),index = 1)
+        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md_spielplan["Heim"].sort_values().unique(),index = 5)
         if team == "Braunschweig":
             st.toast("😒")
         elif team == "Hannover 96":
@@ -158,7 +158,7 @@ with col2:
         )         
         
     else:  
-        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].sort_values().unique(),index = 1)  
+        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].sort_values().unique(),index = 5)  
         if team == "Braunschweig":
             st.toast("😒")
         elif team == "Hannover 96":
