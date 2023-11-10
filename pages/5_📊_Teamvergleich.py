@@ -9,8 +9,12 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 st.set_page_config(layout="centered")
 # Session State für Smartphone-Version
 st.session_state.mobile_on = st.session_state.mobile_on
-# Sidebar-Notiz
-st.sidebar.success("Wähle aus der Liste oben den Punkt aus, den Du Dir anschauen möchtest!")
+
+# Höhe der Sidebar-Liste anpassen
+st.sidebar.markdown("""
+                    <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
+                    """, unsafe_allow_html=True)
+                    
 # Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
 mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
 #%% Tabellen einlesen
@@ -145,6 +149,7 @@ df['passing.avgDist'] = df['passing.Total.TotDist'].div(df['passing.Total.Att'])
 df['defense.Tackles.Def 3rd.Pct'] = df['defense.Tackles.Def 3rd'].div(df['defense.Tackles.Tkl'])*100
 df['defense.Tackles.Mid 3rd.Pct'] = df['defense.Tackles.Mid 3rd'].div(df['defense.Tackles.Tkl'])*100
 df['defense.Tackles.Att 3rd.Pct'] = df['defense.Tackles.Att 3rd'].div(df['defense.Tackles.Tkl'])*100
+
 #%% Import der Bilder, als Objekt speichern
 @st.cache_data
 def images():
@@ -262,6 +267,7 @@ with tab1:
                                       "Schüsse aufs Tor",
                                       "Expected Goals pro Spiel",
                                       "Expected Goals pro Spiel (ohne 11m)",
+                                      "Ballkontakte im letzten Drittel",
                                       "Abseits",
                                       "Dribblings",
                                       "Standardtore"])
@@ -275,6 +281,8 @@ with tab1:
            st.pyplot(hbar(df,"shots.Sh","Schüsse pro Spiel",pergame = True))
     elif option == "Schüsse aufs Tor":
            st.pyplot(hbar(df,"shots.SoT","Schüsse aufs Tor pro Spiel",pergame = True))
+    elif option == "Ballkontakte im letzten Drittel":
+           st.pyplot(hbar(df,"poss.Touches.Att 3rd","Ballkontakte im offensiven Drittel pro Spiel", pergame = True))
     elif option == "Abseits":
            st.pyplot(hbar(df,'pt.Outcomes.Off',"Ins Abseits gelaufen (ganze Saison)",pergame = False))
     elif option == "Dribblings":
@@ -286,15 +294,19 @@ with tab1:
 with tab2:
     option = st.selectbox("",options=["Gegentore",
                                       "Expected Goals against pro Spiel",
-                                      "Fehler",
+                                      "Individuelle Fehler",
+                                      "Fehler provoziert",
                                       "Abseits",
                                       "Standardtore"])
     if option == "Gegentore":
            st.pyplot(hbar(df,"GA","Gegentore"))
     elif option == "Expected Goals against pro Spiel":
            st.pyplot(hbar(df,"xGA","Expected Goals against pro Spiel",pergame = True))
-    elif option == "Fehler":
-           st.pyplot(hbar(df,"defense.Err","Fehler",pergame = False))    
+    elif option == "Individuelle Fehler":
+           st.pyplot(hbar(df,"defense.Err","Individuelle Fehler",pergame = False))    
+           st.caption("Individuelle Fehler, die zu einer Torchance geführt haben")
+    elif option == "Fehler provoziert":
+           st.pyplot(hbar(df,"defense.ag.Err","Fehler provoziert",pergame = False)) 
            st.caption("Individuelle Fehler, die zu einer Torchance geführt haben")
     elif option == "Abseits":
            st.pyplot(hbar(df,'pt.ag.Outcomes.Off',"Gegner ins Abseits gestellt (ganze Saison)",pergame = False))
