@@ -9,11 +9,14 @@ from PIL import Image
 st.set_page_config(layout="centered")
 # Session State für Smartphone-Version
 st.session_state.mobile_on = st.session_state.mobile_on
-# Sidebar-Notiz
-st.sidebar.success("Wähle aus der Liste oben den Punkt aus, den Du Dir anschauen möchtest!")
+
 # Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
 mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
 
+# Höhe der Sidebar-Liste anpassen
+st.sidebar.markdown("""
+                    <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
+                    """, unsafe_allow_html=True)
 #%% Tabellen einlesen
 @st.cache_data(ttl=3600*12)
 def load_data():
@@ -42,6 +45,10 @@ def load_data():
     while any(str(target) in col for col in passing.columns):
         passing.columns = passing.columns.str.replace(str(target),"")
         target += 1
+    target = 21
+    while any(str(target) in col for col in passing.columns):
+        passing.columns = passing.columns.str.replace(str(target),"")
+        target += 1
     passing.columns = passing.columns.str.replace("Unnamed: _level_0.","").str.replace("Unnamed: 0_level_0.","")
     new_columns = {col: 'passing.' + col for col in passing.iloc[:,3:]}
     passing.rename(columns=new_columns,inplace = True)
@@ -50,6 +57,10 @@ def load_data():
     passingag = all_tables[11]
     passingag.columns = passingag.columns.map('.'.join)
     target = 17
+    while any(str(target) in col for col in passingag.columns):
+        passingag.columns = passingag.columns.str.replace(str(target),"")
+        target += 1
+    target = 21
     while any(str(target) in col for col in passingag.columns):
         passingag.columns = passingag.columns.str.replace(str(target),"")
         target += 1
@@ -134,8 +145,10 @@ def load_data():
         }
     df['Squad'] = df['Squad'].replace(new_names)
     df['passing.LongPct'] = (100*df['passing.Long.Att'].div(df['passing.Total.Att'])).round(1)
+    df["passing.PrgP/90"] = df["passing.PrgP"].div(df["MP"]).round(1)
     return df
 df = load_data()
+
 #%% Import der Bilder, als Objekt speichern
 @st.cache_data
 def images():
@@ -160,6 +173,7 @@ def radar_ges(df,team):
     team : Der Verein, für den der Plot erstellt werden soll (needs "")
 
     """
+    # Tore, xG, Gegentore, xAG,Ballbesitz,Ballkontakte letztes Drittel, erfolg. Dribblings, 
     df_copy = df.copy()
     i = df_copy[df_copy['Squad'] == team].index[0]
     Pässe = (df_copy.at[i,"passing.Total.pergame"]-min(df_copy["passing.Total.pergame"]))/(max(df_copy["passing.Total.pergame"])-min(df_copy["passing.Total.pergame"]))
@@ -275,7 +289,7 @@ def radar_off(df,team):
     Sh = (df_copy.at[i,"shots.Sh/90"]-min(df_copy["shots.Sh/90"]))/(max(df_copy["shots.Sh/90"])-min(df_copy["shots.Sh/90"]))
     OffKon = (df_copy.at[i,"poss.Touches.Att 3rd"]-min(df_copy["poss.Touches.Att 3rd"]))/(max(df_copy["poss.Touches.Att 3rd"])-min(df_copy["poss.Touches.Att 3rd"]))
     Ballbesitz = (df_copy.at[i,"Poss"]-min(df_copy["Poss"]))/(max(df_copy["Poss"])-min(df_copy["Poss"]))
-    KeyPass = (df_copy.at[i,"passing.KP"]-min(df_copy["passing.KP"]))/(max(df_copy["passing.KP"])-min(df_copy["passing.KP"]))
+    PgrPass = (df_copy.at[i,"passing.PrgP/90"]-min(df_copy["passing.PrgP/90"]))/(max(df_copy["passing.PrgP/90"])-min(df_copy["passing.PrgP/90"]))
     OffStd = (df_copy.at[i,"creation.SCA Types.PassDead"]-min(df_copy["creation.SCA Types.PassDead"]))/(max(df_copy["creation.SCA Types.PassDead"])-min(df_copy["creation.SCA Types.PassDead"]))
     Dribb = (df_copy.at[i,"poss.Take-Ons.Succ"]-min(df_copy["poss.Take-Ons.Succ"]))/(max(df_copy["poss.Take-Ons.Succ"])-min(df_copy["poss.Take-Ons.Succ"]))
     
@@ -284,7 +298,7 @@ def radar_off(df,team):
     df_copy['n_Sh'] = (df_copy['shots.Sh/90'] - df_copy['shots.Sh/90'].min()) / (df_copy['shots.Sh/90'].max() - df_copy['shots.Sh/90'].min())
     df_copy['n_OffKon'] = (df_copy['poss.Touches.Att 3rd'] - df_copy['poss.Touches.Att 3rd'].min()) / (df_copy['poss.Touches.Att 3rd'].max() - df_copy['poss.Touches.Att 3rd'].min())
     df_copy['n_Ballbesitz'] = (df_copy['Poss'] - df_copy['Poss'].min()) / (df_copy['Poss'].max() - df_copy['Poss'].min())
-    df_copy['n_KeyPass'] = (df_copy['passing.KP'] - df_copy['passing.KP'].min()) / (df_copy['passing.KP'].max() - df_copy['passing.KP'].min())
+    df_copy['n_PgrPass'] = (df_copy['passing.PrgP/90'] - df_copy['passing.PrgP/90'].min()) / (df_copy['passing.PrgP/90'].max() - df_copy['passing.PrgP/90'].min())
     df_copy['n_OffStd'] = (df_copy['creation.SCA Types.PassDead'] - df_copy['creation.SCA Types.PassDead'].min()) / (df_copy['creation.SCA Types.PassDead'].max() - df_copy['creation.SCA Types.PassDead'].min())
     df_copy['n_Dribb'] = (df_copy['poss.Take-Ons.Succ'] - df_copy['poss.Take-Ons.Succ'].min()) / (df_copy['poss.Take-Ons.Succ'].max() - df_copy['poss.Take-Ons.Succ'].min())
     
@@ -293,30 +307,30 @@ def radar_off(df,team):
     dSh = df_copy["n_Sh"].mean()
     dOffKon = df_copy["n_OffKon"].mean()
     dBallbesitz = df_copy["n_Ballbesitz"].mean()
-    dKeyPass = df_copy["n_KeyPass"].mean()
+    dPgrPass = df_copy["n_PgrPass"].mean()
     dOffStd = df_copy["n_OffStd"].mean()
     dDribb =  df_copy["n_Dribb"].mean()
     
     df1 = pd.DataFrame(dict( # Teamwert
-        r = [Gls,Sh,npxG,OffKon,Ballbesitz,KeyPass,Dribb,OffStd,Gls],
+        r = [Gls,Sh,npxG,OffKon,Ballbesitz,PgrPass,Dribb,OffStd,Gls],
         theta = [f"Tore: {df_copy.at[i,'shots.Gls']}",
                  f"Schüsse pro Spiel: {df_copy.at[i,'shots.Sh/90']}",
                  f"xGoals pro Schuss: {df_copy.at[i,'shots.npxG/Sh']}%",
                  f"Ballkontakte im letzten Drittel pro Spiel: {df_copy.at[i,'poss.Touches.Att 3rd']}",
                  f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Key Passes: {df_copy.at[i,'passing.KP']}",
+                 f"Prog. Pässe pro Spiel: {df_copy.at[i,'passing.PrgP/90']}",
                  f"Erfolgreiche Dribblings: {df_copy.at[i,'poss.Take-Ons.Succ']}",
                  f"Chancen nach Offensivstandards: {df_copy.at[i,'creation.SCA Types.PassDead']}",
                  f"Tore: {df_copy.at[i,'shots.Gls']}"]))
     
     df2 = pd.DataFrame(dict( # Liga-Durchschnitt
-        r = [dGls,dSh,dnpxG,dOffKon,dBallbesitz,dKeyPass,dDribb,dOffStd,dGls],
+        r = [dGls,dSh,dnpxG,dOffKon,dBallbesitz,dPgrPass,dDribb,dOffStd,dGls],
         theta = [f"Tore: {df_copy.at[i,'shots.Gls']}",
                  f"Schüsse pro Spiel: {df_copy.at[i,'shots.Sh/90']}",
                  f"xGoals pro Schuss: {df_copy.at[i,'shots.npxG/Sh']}%",
                  f"Ballkontakte im letzten Drittel pro Spiel: {df_copy.at[i,'poss.Touches.Att 3rd']}",
                  f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Key Passes: {df_copy.at[i,'passing.KP']}",
+                 f"Prog. Pässe pro Spiel: {df_copy.at[i,'passing.PrgP/90']}",
                  f"Erfolgreiche Dribblings: {df_copy.at[i,'poss.Take-Ons.Succ']}",
                  f"Chancen nach Offensivstandards: {df_copy.at[i,'creation.SCA Types.PassDead']}",
                  f"Tore: {df_copy.at[i,'shots.Gls']}"]))
