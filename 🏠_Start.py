@@ -2,9 +2,6 @@
 import streamlit as st
 st.set_page_config(layout="wide")
 
-mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
-if "mobile_on" not in st.session_state:
-    st.session_state.mobile_on = False
     
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
@@ -30,9 +27,6 @@ with col2:
     with st.expander("Weitere Infos"):
         st.markdown(
             """
-            Das Ganze ist ein großes Übungs- und Spaßprojekt. 
             Sämtliche genutzte Daten kommen von [fbref.com](https://fbref.com/en/comps/33/2-Bundesliga-Stats/) und sind mit einer Verzögerung von ca. einem Tag aktuell.\\
-            Die App wurde mithilfe des Python-Pakets [*Streamlit*](https.streamlit.io) erstellt. Optimiert ist sie für die Nutzung im Browser an einem Computer.
-            Sie funktioniert auch auf dem Smartphone, manche Darstellungen sind jedoch unter Umständen nicht optimal. 
-            In der Leiste links kann die Smartphone-Version aktiviert werden. Diese entschlackt einige Tabellen, so dass Betrachtung und Bedienung auf mobilen Geräten einfacher ist.
+            Die App wurde mithilfe des Python-Pakets [*Streamlit*](https.streamlit.io) erstellt. Optimiert ist sie für die Nutzung im Browser.
             """)
