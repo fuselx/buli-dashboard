@@ -2,16 +2,13 @@
 import streamlit as st
 import pandas as pd
 st.set_page_config(layout="centered")
-# Session State für Smartphone-Version
-st.session_state.mobile_on = st.session_state.mobile_on
+
 
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
                     <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
                     """, unsafe_allow_html=True)
 
-# Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
-mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
 
 #%% Tabellen einlesen
 @st.cache_data(ttl=3600*12)
@@ -47,15 +44,6 @@ Tabelle.rename(columns = {
     'Pts':'Punkte'
     },inplace = True)
 
-Tabelle_slim = Tabelle[['Platz','Team','Spiele','Tordifferenz','Punkte']]
-Tabelle_slim.rename(columns = {
-    'Platz':'#',
-    'Verein':'Team',
-    'Spiele':'Sp',
-    'Tordifferenz':'TD',
-    'Punkte':'Pkt'},inplace = True)
-Tabelle_slim.set_index('#', inplace=True)
-Tabelle.set_index('Platz', inplace=True)
 
 #%% Styles
 Tabelle_style = [{'selector':'th',
@@ -81,7 +69,4 @@ Tabelle_style = [{'selector':'th',
 
 #%% Dashboard
 st.subheader("Tabelle der 2. Bundesliga",divider = "rainbow")
-if mobile_on:  
-    st.table(Tabelle_slim.style.set_table_styles(Tabelle_style))
-else:
-    st.table(Tabelle.style.set_table_styles(Tabelle_style))
+st.table(Tabelle.style.set_table_styles(Tabelle_style))
