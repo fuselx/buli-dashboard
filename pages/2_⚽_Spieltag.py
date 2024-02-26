@@ -6,18 +6,14 @@ import requests
 import io
 from PIL import Image
 st.set_page_config(layout="wide")
-# Session State für Smartphone-Version
-st.session_state.mobile_on = st.session_state.mobile_on
 
-# Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
-mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
 
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
                     <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
                     """, unsafe_allow_html=True)
 
-directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
+directory = "https://raw.githubusercontent.com/fuselx/buli-dashboard/main/Logos%20Zweite%20Liga/"
 #%% Spieltage einlesen
 @st.cache_data(ttl=3600*12)
 def matchdays():
@@ -91,50 +87,7 @@ def table_images():
     return md
 
 md = table_images()
-#%% Dataframes formatieren
-# Kleiner md-Datensatz für Handy-Version
-md_small = md[["Spieltag","Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo"]]
-md_small['Datum'] =  pd.to_datetime(md_small['Datum']).dt.strftime('%d.%m.%y')
-md_small_style = [{'selector':'tbody',
-                   'props':[('font-size',"14px"),('color','black')]},
-                  {'selector':'td:nth-child(7)',
-                   'props':[('font-weight','bold'),("text-align","center")]},
-                  {'selector':'td:nth-child(2)',
-                   'props':[('display','none')]},
-                  {'selector':'td:nth-child(2)',
-                   'props':[('border-left','1px solid white')]},
-                  {'selector':'td:nth-child(3)',
-                   'props':[('border-right','1px solid white'),('border-left','1px solid white')]},
-                  {'selector':'td:nth-child(4)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'td:nth-child(6)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'td:nth-child(7)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'td:nth-child(8)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'tr:nth-child(1)',
-                   'props':[('border-top','2px solid white')]},
-                  {'selector':'tr:last-child',
-                   'props':[('border-bottom','2px solid white')]},
-                  {'selector':'tr:nth-child(2)',
-                   'props':[('border-bottom','2px solid gray')]},
-                  {'selector':'tr:nth-child(6)',
-                   'props':[('border-bottom','2px solid gray')]},
-                  {'selector':'th',
-                  'props':[('display','none')]},
-                  {'selector':'td:nth-child(9)',
-                  'props':[('display','none')]},
-                  {'selector':'td:nth-child(10)',
-                  'props':[('display','none')]},
-                  {'selector':'tr:nth-child(odd)',
-                   'props':[('background-color','#e7f7e1')]},
-                  {'selector':'tr:nth-child(odd) td',
-                   'props':[('border-right','1px solid #e7f7e1')]},
-                  {'selector':'tr:nth-child(even) td',
-                   'props':[('border-right','1px solid white')]},]
-md_spielplan_small = md[["Spieltag","Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo","Heim","Auswärts"]]
-md_spielplan_small['Datum'] =  pd.to_datetime(md_spielplan_small['Datum']).dt.strftime('%d.%m.%y')
+
 
 # Converting links to html tags
 def path_to_image_html(path):
@@ -151,50 +104,31 @@ col1,col2,col3 = st.columns((1,7,1))
 with col2:
     st.subheader("Spieltage",divider = "rainbow")
     Start_index = len(mdSubset[(mdSubset["Heim"] == "Hannover 96")|(mdSubset["Auswärts"] == "Hannover 96")]) # aktuelle Anzahl von Spielen
-    if mobile_on:
-       buttonDown,buttonUp,Space = st.columns((2,1,10))
-       with buttonDown:
-           if st.button("⏪"):
-               st.session_state['slider'] -= 1
-       with buttonUp:
-           if st.button("⏩"):
-               st.session_state['slider'] += 1
-       Spieltag = st.slider("",min_value=1,max_value=34,value=Start_index,key="slider",label_visibility="collapsed")
-       md_small_html =  convert_df(md_small[md_small["Spieltag"] == Spieltag]) 
-       css_string = ''
-       for rule in md_small_style:
-           selector = rule['selector']
-           props = '; '.join([f'{prop[0]}: {prop[1]}' for prop in rule['props']])
-           css_string += f'{selector} {{{props}}}\n'
-       md_small_html_styled =  f'<style>{css_string}</style>{md_small_html}'  
-       st.markdown(
-           md_small_html_styled,
-           unsafe_allow_html=True
-       )         
-    else:
-                buttonDown,buttonUp,Space = st.columns((1,1,13))
-                with buttonDown:
-                    if st.button("⏪"):
-                        st.session_state['select'] -= 1
-                with buttonUp:
-                    if st.button("⏩"):
-                        st.session_state['select'] += 1
-                Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1,key="select",label_visibility="collapsed")
-                st.dataframe(md[md["Spieltag"] == Spieltag],
-                             hide_index=True,
-                             height = 360,
-                             column_order=("Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
-                             column_config={'Spieltag':None,
-                                            'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                            'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
-                                            'xG':st.column_config.ProgressColumn(
-                                                min_value=0,
-                                                max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                                format = "  %f",
-                                                width = "small"),
-                                            'xG ':st.column_config.ProgressColumn(
-                                                 min_value=0,
-                                                 max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
-                                                 format = "  %f",
-                                                 width = "small")                                            
-                                         })
+    
+    
+    buttonDown,buttonUp,Space = st.columns((1,1,13))
+    with buttonDown:
+        if st.button("⏪"):
+            st.session_state['select'] -= 1
+    with buttonUp:
+        if st.button("⏩"):
+            st.session_state['select'] += 1
+    Spieltag = st.selectbox("",options = range(1,35),index=Start_index-1,key="select",label_visibility="collapsed")
+    st.dataframe(md[md["Spieltag"] == Spieltag],
+                    hide_index=True,
+                    height = 360,
+                    column_order=("Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
+                    column_config={'Spieltag':None,
+                                'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+                                'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
+                                'xG':st.column_config.ProgressColumn(
+                                    min_value=0,
+                                    max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                    format = "  %f",
+                                    width = "small"),
+                                'xG ':st.column_config.ProgressColumn(
+                                        min_value=0,
+                                        max_value=3.5,#md[md["Spieltag"] == Spieltag][['xG','xG ']].max().max(),
+                                        format = "  %f",
+                                        width = "small")                                            
+                                })

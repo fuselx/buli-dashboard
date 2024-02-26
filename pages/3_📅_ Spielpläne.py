@@ -6,18 +6,15 @@ import requests
 import io
 from PIL import Image
 st.set_page_config(layout="wide")
-# Session State für Smartphone-Version
-st.session_state.mobile_on = st.session_state.mobile_on
 
-# Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
-mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
+
 
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
                     <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
                     """, unsafe_allow_html=True)
 
-directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
+directory = "https://raw.githubusercontent.com/fuselx/buli-dashboard/main/Logos%20Zweite%20Liga/"
 #%% Spieltage einlesen
 @st.cache_data(ttl=3600*12)
 def matchdays():
@@ -92,41 +89,7 @@ def table_images():
 
 md = table_images()
 #%% Dataframes formatieren
-# Kleiner md-Datensatz für Handy-Version
-md_spielplan_style = [{'selector':'tbody',
-                   'props':[('font-size',"12px"),('color','black')]},
-                  {'selector':'td:nth-child(7)',
-                   'props':[('font-weight','bold'),("text-align","center")]},
-                  {'selector':'td:nth-child(2)',
-                   'props':[('border-left','1px solid white'),('font-weight','bold')]},
-                  {'selector':'td:nth-child(3)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'td:nth-child(4)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'td:nth-child(6)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'td:nth-child(7)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'td:nth-child(8)',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'tr:nth-child(1)',
-                   'props':[('border-top','2px solid white')]},
-                  {'selector':'tr:last-child',
-                   'props':[('border-bottom','2px solid white')]},
-                  {'selector':'tr:nth-child(even)',
-                   'props':[('background-color','#e7f7e1')]},
-                  {'selector':'tr:nth-child(even) td',
-                   'props':[('border-right','1px solid #e7f7e1')]},
-                  {'selector':'tr:nth-child(odd) td',
-                   'props':[('border-right','1px solid white')]},
-                  {'selector':'th',
-                  'props':[('display','none')]},
-                  {'selector':'td:nth-child(9)',
-                  'props':[('display','none')]},
-                  {'selector':'td:nth-child(10)',
-                  'props':[('display','none')]}]
-md_spielplan = md[["Spieltag","Tag","Datum","Anstoß","Heimlogo","Ergebnis","Auswärtslogo","Heim","Auswärts"]]
-md_spielplan['Datum'] =  pd.to_datetime(md_spielplan['Datum']).dt.strftime('%d.%m.%y')
+
 
 # Converting links to html tags
 def path_to_image_html(path):
@@ -141,44 +104,26 @@ def convert_df(input_df):
 col1,col2,col3 = st.columns((1,8,1))
 with col2:
     st.subheader("Spielpläne einzelner Teams",divider = "rainbow")
-    if mobile_on:
-        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md_spielplan["Heim"].sort_values().unique(),index = 5)
-        if team == "Braunschweig":
-            st.toast("😒")
-        elif team == "Hannover 96":
-            st.balloons()
-        md_spielplan_html = convert_df(md_spielplan[(md_spielplan['Heim'] == team)|(md_spielplan["Auswärts"] == team)])
-        css_string = ''
-        for rule in md_spielplan_style:
-            selector = rule['selector']
-            props = '; '.join([f'{prop[0]}: {prop[1]}' for prop in rule['props']])
-            css_string += f'{selector} {{{props}}}\n'
-        md_spielplan_html_styled =  f'<style>{css_string}</style>{md_spielplan_html}'
-        st.markdown(
-            md_spielplan_html_styled,
-            unsafe_allow_html=True
-        )         
-        
-    else:  
-        team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].sort_values().unique(),index = 5)  
-        if team == "Braunschweig":
-            st.toast("😒")
-        elif team == "Hannover 96":
-            st.balloons()
-        st.dataframe(md[(md['Heim'] == team)|(md["Auswärts"] == team)],
-                         hide_index=True,
-                         height = 1240,
-                         column_order=("Spieltag","Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
-                         column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
-                                        'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
-                                        'xG':st.column_config.ProgressColumn(
-                                            min_value=0,
-                                            max_value=3.5,
-                                            format = "  %f",
-                                            width = "small"),
-                                        'xG ':st.column_config.ProgressColumn(
-                                            min_value=0,
-                                            max_value=3.5,
-                                            format = "  %f",
-                                            width = "small")                                            
-                                     })
+     
+    team = st.selectbox("Wähle das Team, dessen Spieplan du dir anschauen möchtest",options = md["Heim"].sort_values().unique(),index = 5)  
+    if team == "Braunschweig":
+        st.toast("😒")
+    elif team == "Hannover 96":
+        st.balloons()
+    st.dataframe(md[(md['Heim'] == team)|(md["Auswärts"] == team)],
+                        hide_index=True,
+                        height = 1240,
+                        column_order=("Spieltag","Tag","Datum","Anstoß","xG","Heimlogo","Ergebnis","Auswärtslogo","xG ","Zuschauer","Schiedsrichter"),
+                        column_config={'Heimlogo':st.column_config.ImageColumn('Heim',width = "small"),
+                                    'Auswärtslogo':st.column_config.ImageColumn('Auswärts',width = "small"),
+                                    'xG':st.column_config.ProgressColumn(
+                                        min_value=0,
+                                        max_value=3.5,
+                                        format = "  %f",
+                                        width = "small"),
+                                    'xG ':st.column_config.ProgressColumn(
+                                        min_value=0,
+                                        max_value=3.5,
+                                        format = "  %f",
+                                        width = "small")                                            
+                                    })

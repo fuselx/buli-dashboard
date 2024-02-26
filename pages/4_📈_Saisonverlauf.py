@@ -4,16 +4,13 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 st.set_page_config(layout="centered")
-# Session State für Smartphone-Version
-st.session_state.mobile_on = st.session_state.mobile_on
+
 
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
                     <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
                     """, unsafe_allow_html=True)
 
-# Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
-mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
 
 #%% Spieltage einlesen
 @st.cache_data(ttl=3600*12)
@@ -153,7 +150,7 @@ def season_rank():
     fig.update_xaxes(minor=dict(ticklen=4, tickcolor="#cdd1cf", showgrid=False),title_text='')
     return fig
 
-#%% Graph für Saisonverlauf erstellen erstellen 
+#%% Graph für Saisonverlauf erstellen (allgemein) 
 def season(var):
     Vereinsfarben = ["#FBC910","#e30511", "black","#009d3b","#1e5cb3","#149c33","#006eb8","#014e9f","#00579c","#e30511","#004c94",
                      "#0169b9","#aa1025","#562b86","#1962b9","#014b9d","#614837","#b88748"] #alphabetische Reihenfole der Teams

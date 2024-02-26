@@ -7,16 +7,13 @@ import matplotlib.pyplot  as plt
 import numpy as np
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 st.set_page_config(layout="centered")
-# Session State für Smartphone-Version
-st.session_state.mobile_on = st.session_state.mobile_on
 
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
                     <style> [data-testid='stSidebarNav'] > ul { min-height: 60vh; } </style> 
                     """, unsafe_allow_html=True)
                     
-# Toggle für Smartphone-Version (wird durch Session State für alle Seiten übernommen)
-mobile_on = st.sidebar.toggle("Smartphone-Version", key = "mobile_on")
+
 #%% Tabellen einlesen
 @st.cache_data(ttl=3600*12)
 def load_data():
@@ -153,7 +150,7 @@ df['defense.Tackles.Att 3rd.Pct'] = df['defense.Tackles.Att 3rd'].div(df['defens
 #%% Import der Bilder, als Objekt speichern
 @st.cache_data
 def images():
-    directory = "https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Logos%20Zweite%20Liga/"
+    directory = "https://raw.githubusercontent.com/fuselx/buli-dashboard/main/Logos%20Zweite%20Liga/"
     images = {}
     for index, row in df.iterrows():
         image_name = row["Squad"] + ".png"  # gesuchter Name des Logos

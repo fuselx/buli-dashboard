@@ -22,7 +22,7 @@ with col2:
         """
         )
     
-    st.image("https://raw.githubusercontent.com/fuselwolga/buli-dashboard/main/Aufstieg_2002.jpg")
+    st.image("https://raw.githubusercontent.com/fuselx/buli-dashboard/main/Aufstieg_2002.jpg")
     st.caption("Symbolbild")
     with st.expander("Weitere Infos"):
         st.markdown(
