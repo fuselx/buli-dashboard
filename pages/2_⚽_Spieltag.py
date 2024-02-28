@@ -7,6 +7,8 @@ import io
 from PIL import Image
 st.set_page_config(layout="wide")
 
+pd.options.mode.chained_assignment = None  # default='warn'
+
 
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
