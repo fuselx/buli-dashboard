@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-import numpy as np
-import requests
-import io
-from PIL import Image
+
 st.set_page_config(layout="wide")
+
+from pages.prep import data_matchdays
+from pages.prep import data_table
+
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -15,26 +16,10 @@ st.sidebar.markdown("""
                     """, unsafe_allow_html=True)
 
 
-#%% Tabellen einlesen
-@st.cache_data(ttl=3600*12)
-def load_data():
-# Daten von der Website einlesen
-    all_tables = pd.read_html("https://fbref.com/en/comps/33/2-Bundesliga-Stats")
-    # Erstmal die Tabelle ausgeben lassen
-    df = all_tables[0]
-    
 
-    # Vereinsnamen anpassen
-    new_names = {"Wehen":"Wiesbaden",
-                 "Karlsruher":"Karlsruhe",
-                 "Paderborn 07":"Paderborn"
-        }
-    df['Squad'] = df['Squad'].replace(new_names)
-
-    return df
-#%% Tabelle bearbeiten
+#%% Tabelle einlesen und bearbeiten
 # Team-Stastistiken und Tabelle
-df = load_data()
+df = data_table.load_data()
 Tabelle = df[['Rk','Squad','MP','W','D','L','GF','GA','GD','Pts']]
 Tabelle.rename(columns = {
     'Rk':'Platz',
@@ -75,81 +60,8 @@ Tabelle_style = [{'selector':'table tr th:nth-child(1)',
                    'props':[('color','black'),('border','2px solid white')]}]
 
 #### Spieltage
-directory = "https://raw.githubusercontent.com/fuselx/buli-dashboard/main/Logos%20Zweite%20Liga/"
-#%% Spieltage einlesen
-@st.cache_data(ttl=3600*12)
-def matchdays():
-    temp = pd.read_html("https://fbref.com/en/comps/33/schedule/2-Bundesliga-Scores-and-Fixtures")
-    md = temp[0]
-    md = md.dropna(subset=['Wk'])
-    md.rename(columns = {
-        'Wk':'Spieltag',
-        'Day':'Tag',
-        'Date':'Datum',
-        'Time':'Anstoß',
-        'Home':'Heim',
-        'Score':'Ergebnis',
-        'Away':'Auswärts',
-        'Attendance':'Zuschauer',
-        'Referee':'Schiedsrichter',
-        'xG.1':'xG '},inplace = True)
-    new_names = {"Wehen":"Wiesbaden",
-                 "Karlsruher":"Karlsruhe",
-                 "Paderborn 07":"Paderborn"
-        }
-    md.loc[:,['Heim','Auswärts']] = md.loc[:,['Heim','Auswärts']].replace(new_names)
-    days = {'Fri':'Fr.',
-            'Sat':'Sa.',
-            'Sun':'So.',
-            'Tue':'Di.',
-            'Wed':'Mi.',
-            'Thu':'Do.'}
-    md.loc[:,'Tag'] = md.loc[:,'Tag'].replace(days)
-    md['Datum'] = pd.to_datetime(md['Datum']).dt.strftime('%d.%m.%Y')
-    md['Spieltag'] = md['Spieltag'].astype('int')
-    md['Zuschauer'] = pd.to_numeric(md['Zuschauer'])
-    md['Ergebnis'] = md['Ergebnis'].fillna("-:-")
-    md['Anstoß'] = md['Anstoß'].fillna("tbd")
-    md = md.replace(np.nan, 0)
-    md['Schiedsrichter'] = md['Schiedsrichter'].replace(0,"")
-    md = md.replace(0,np.nan)
-    md['xG'] = md['xG'].replace(np.nan,0)
-    md['xG '] = md['xG '].replace(np.nan,0)
-    md = md.drop(['Venue','Match Report','Notes'],axis = 1)
-    return md
-
-# Spieltage
-md = matchdays()
+md = data_matchdays.table_images()
 mdSubset = md[md['Ergebnis'] != "-:-" ]
-
-#%% Bilder laden
-@st.cache_data
-def images():
-    images = {}
-    mdImages = pd.DataFrame(md["Heim"].unique())
-    for index, row in mdImages.iterrows():
-        image_name = row[0] + ".png"  # gesuchter Name des Logos
-        image_path = directory + image_name
-        response = requests.get(image_path, stream=True)
-        img = Image.open(io.BytesIO(response.content)).convert("RGBA")
-        images[image_name] = img
-    return images
-
-# Bilder laden
-images = images()
-def table_images():
-    # Bilder in die Tabelle laden
-    md['Heimlogo'] = None
-    md['Auswärtslogo'] = None
-    for index, row in md.iterrows():
-        imagename_home = row['Heim'] + ".png"
-        imagename_away = row['Auswärts'] + ".png"
-        md.loc[index,'Heimlogo'] = directory + imagename_home
-        md.loc[index,'Auswärtslogo'] = directory + imagename_away   
-    return md
-
-md = table_images()
-
 
 # Converting links to html tags
 def path_to_image_html(path):

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+#from st_pages import hide_pages, Page,show_pages
 st.set_page_config(layout="wide")
 
+#hide_pages(["data_stats"])
     
 # Höhe der Sidebar-Liste anpassen
 st.sidebar.markdown("""
