@@ -59,6 +59,8 @@ Tabelle_style = [{'selector':'table tr th:nth-child(1)',
                   {'selector':'tbody tr td',
                    'props':[('color','black'),('border','2px solid white')]}]
 
+Tabelle.set_index('Platz',inplace = True)
+
 #### Spieltage
 md = data_matchdays.table_images()
 mdSubset = md[md['Ergebnis'] != "-:-" ]
@@ -80,10 +82,10 @@ def convert_df(input_df):
 
 
 #%% Dashboard
-st.subheader("Spieltag und Tabelle")
-col1,col2 = st.columns((6,5))
-with col1:
 
+col1,col2,col3 = st.columns((2,7,2))
+with col2:
+    st.subheader("Spieltag")
     Start_index = len(mdSubset[(mdSubset["Heim"] == "Hannover 96")|(mdSubset["Auswärts"] == "Hannover 96")]) # aktuelle Anzahl von Spielen
     Spieltag = st.selectbox(label = "leer",options = range(1,35),index=Start_index-1,key="select",label_visibility="collapsed")
     st.dataframe(md[md["Spieltag"] == Spieltag],
@@ -104,5 +106,5 @@ with col1:
                                         format = "  %f",
                                         width = "small")                                            
                                 })
-with col2: 
+    st.subheader("Tabelle")
     st.table(Tabelle.style.set_table_styles(Tabelle_style))
