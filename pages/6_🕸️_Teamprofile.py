@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(layout="centered")
 
@@ -18,113 +19,6 @@ df = data_stats.load_data()
 #%% Import der Bilder, als Objekt speichern
 images = data_stats.images()
 
-#%%
-@st.cache_data
-def radar_ges(df,team):
-    """
-    Funktion, um Radar-Charts für jede Mannschaft zu erstellen
-
-    ----------
-    df : Datensatz
-    team : Der Verein, für den der Plot erstellt werden soll (needs "")
-
-    """
-    # Tore, xG, Gegentore, xAG,Ballbesitz,Ballkontakte letztes Drittel, erfolg. Dribblings, 
-    df_copy = df.copy()
-    i = df_copy[df_copy['Squad'] == team].index[0]
-    Pässe = (df_copy.at[i,"passing.Total.pergame"]-min(df_copy["passing.Total.pergame"]))/(max(df_copy["passing.Total.pergame"])-min(df_copy["passing.Total.pergame"]))
-    Passgenauigkeit = (df_copy.at[i,"passing.Total.Cmp%"]-min(df_copy["passing.Total.Cmp%"]))/(max(df_copy["passing.Total.Cmp%"])-min(df_copy["passing.Total.Cmp%"]))
-    ProgP = (df_copy.at[i,"passing.PrgP"]-min(df_copy["passing.PrgP"]))/(max(df_copy["passing.PrgP"])-min(df_copy["passing.PrgP"]))
-    TB = (df_copy.at[i,"pt.Pass Types.TB"]-min(df_copy["pt.Pass Types.TB"]))/(max(df_copy["pt.Pass Types.TB"])-min(df_copy["pt.Pass Types.TB"]))
-    Ballbesitz = (df_copy.at[i,"Poss"]-min(df_copy["Poss"]))/(max(df_copy["Poss"])-min(df_copy["Poss"]))
-    Flankenwechsel = (df_copy.at[i,"pt.Pass Types.Sw"]-min(df_copy["pt.Pass Types.Sw"]))/(max(df_copy["pt.Pass Types.Sw"])-min(df_copy["pt.Pass Types.Sw"]))
-    Flanken = (df_copy.at[i,"pt.Pass Types.Crs"]-min(df_copy["pt.Pass Types.Crs"]))/(max(df_copy["pt.Pass Types.Crs"])-min(df_copy["pt.Pass Types.Crs"]))
-    LangeB = (df_copy.at[i,"passing.LongPct"]-min(df_copy["passing.LongPct"]))/(max(df_copy["passing.LongPct"])-min(df_copy["passing.LongPct"]))
-    
-    df_copy['n_Pässe'] = (df_copy['passing.Total.pergame'] - df_copy['passing.Total.pergame'].min()) / (df_copy['passing.Total.pergame'].max() - df_copy['passing.Total.pergame'].min())
-    df_copy['n_Passgenauigkeit'] = (df_copy['passing.Total.Cmp%'] - df_copy['passing.Total.Cmp%'].min()) / (df_copy['passing.Total.Cmp%'].max() - df_copy['passing.Total.Cmp%'].min())
-    df_copy['n_ProgP'] = (df_copy['passing.PrgP'] - df_copy['passing.PrgP'].min()) / (df_copy['passing.PrgP'].max() - df_copy['passing.PrgP'].min())
-    df_copy['n_TB'] = (df_copy['pt.Pass Types.TB'] - df_copy['pt.Pass Types.TB'].min()) / (df_copy['pt.Pass Types.TB'].max() - df_copy['pt.Pass Types.TB'].min())
-    df_copy['n_Ballbesitz'] = (df_copy['Poss'] - df_copy['Poss'].min()) / (df_copy['Poss'].max() - df_copy['Poss'].min())
-    df_copy['n_Flankenwechsel'] = (df_copy['pt.Pass Types.Sw'] - df_copy['pt.Pass Types.Sw'].min()) / (df_copy['pt.Pass Types.Sw'].max() - df_copy['pt.Pass Types.Sw'].min())
-    df_copy['n_Flanken'] = (df_copy['pt.Pass Types.Crs'] - df_copy['pt.Pass Types.Crs'].min()) / (df_copy['pt.Pass Types.Crs'].max() - df_copy['pt.Pass Types.Crs'].min())
-    df_copy['n_LangeB'] = (df_copy['passing.LongPct'] - df_copy['passing.LongPct'].min()) / (df_copy['passing.LongPct'].max() - df_copy['passing.LongPct'].min())
-    
-    dPässe = df_copy["n_Pässe"].mean()
-    dPassgenauigkeit = df_copy["n_Passgenauigkeit"].mean()
-    dProgP = df_copy["n_ProgP"].mean()
-    dTB = df_copy["n_TB"].mean()
-    dBallbesitz = df_copy["n_Ballbesitz"].mean()
-    dFlankenwechsel = df_copy["n_Flankenwechsel"].mean()
-    dFlanken = df_copy["n_Flanken"].mean()
-    dLangeB =  df_copy["n_LangeB"].mean()
-    
-    df1 = pd.DataFrame(dict( # Teamwert
-        r = [Pässe,Ballbesitz,Passgenauigkeit,ProgP,TB,LangeB,Flankenwechsel,Flanken,Pässe],
-        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
-                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
-                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
-                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
-                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
-                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
-                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
-                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
-    
-    df2 = pd.DataFrame(dict( # Liga-Durchschnitt
-        r = [dPässe,dBallbesitz,dPassgenauigkeit,dProgP,dTB,dLangeB,dFlankenwechsel,dFlanken,dPässe],
-        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
-                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
-                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
-                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
-                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
-                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
-                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
-                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
-    
-    df1['Model'] = team
-    df2['Model'] = 'Ligadurchschnitt'
-    df = pd.concat([df1,df2], axis=0)
-    color_discrete_map = {
-    team: 'green',
-    'Ligadurchschnitt': 'gray',
-}
-
-    fig = px.line_polar(df,r='r',color = 'Model',theta = 'theta',
-                        color_discrete_map=color_discrete_map,line_shape = "linear")
-    fig.update_traces(fill='toself',
-                      opacity=0.6,  # Set fill opacity
-                      line=dict(width=0),  # Set line opacity
-                      mode = 'lines')      
-    fig.update_polars(bgcolor='white',
-                      gridshape = "linear",
-                      hole = 0,
-                      angularaxis = dict(
-                          gridcolor= "gray",
-                          griddash = "dot",
-                          linecolor = "black",
-                          linewidth = 0.5,
-                          ticks = ""),
-                      radialaxis = dict(
-                          color = "white",
-                          gridwidth = 0.1,
-                          dtick = 0.25,
-                          linecolor = "white",
-                          showline = False,
-                          ticks = ""
-                          ))                 
-    fig.update_layout(template = "none",
-                      showlegend=False,
-                      dragmode = False,
-                      clickmode = "none",
-                      font = dict(size = 12,color = "black",family = "arial"),
-                      title = "",
-                      title_font_size=35,
-                      title_x=0,
-                      title_font_color = "black",
-                      polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
-    return fig
 #%% Radar-Chart Offensive
 @st.cache_data
 def radar_off(df,team):
@@ -136,102 +30,89 @@ def radar_off(df,team):
     team : Der Verein, für den der Plot erstellt werden soll (needs "")
 
     """
-    df_copy = df.copy()
-    df_copy['shots.npxG/Sh'] = (df_copy['shots.npxG/Sh']*100).astype('int')
-    df_copy['poss.Touches.Att 3rd'] = df_copy['poss.Touches.Att 3rd'].div(df_copy['MP']).round(0).astype('int')
-    i = df_copy[df_copy['Squad'] == team].index[0]
-    npxG = (df_copy.at[i,"shots.npxG/Sh"]-min(df_copy["shots.npxG/Sh"]))/(max(df_copy["shots.npxG/Sh"])-min(df_copy["shots.npxG/Sh"]))
-    Gls = (df_copy.at[i,"shots.Gls"]-min(df_copy["shots.Gls"]))/(max(df_copy["shots.Gls"])-min(df_copy["shots.Gls"]))
-    Sh = (df_copy.at[i,"shots.Sh/90"]-min(df_copy["shots.Sh/90"]))/(max(df_copy["shots.Sh/90"])-min(df_copy["shots.Sh/90"]))
-    OffKon = (df_copy.at[i,"poss.Touches.Att 3rd"]-min(df_copy["poss.Touches.Att 3rd"]))/(max(df_copy["poss.Touches.Att 3rd"])-min(df_copy["poss.Touches.Att 3rd"]))
-    Ballbesitz = (df_copy.at[i,"Poss"]-min(df_copy["Poss"]))/(max(df_copy["Poss"])-min(df_copy["Poss"]))
-    PgrPass = (df_copy.at[i,"passing.PrgP/90"]-min(df_copy["passing.PrgP/90"]))/(max(df_copy["passing.PrgP/90"])-min(df_copy["passing.PrgP/90"]))
-    OffStd = (df_copy.at[i,"creation.SCA Types.PassDead"]-min(df_copy["creation.SCA Types.PassDead"]))/(max(df_copy["creation.SCA Types.PassDead"])-min(df_copy["creation.SCA Types.PassDead"]))
-    Dribb = (df_copy.at[i,"poss.Take-Ons.Succ"]-min(df_copy["poss.Take-Ons.Succ"]))/(max(df_copy["poss.Take-Ons.Succ"])-min(df_copy["poss.Take-Ons.Succ"]))
-    
-    df_copy['n_npxG'] = (df_copy['shots.npxG/Sh'] - df_copy['shots.npxG/Sh'].min()) / (df_copy['shots.npxG/Sh'].max() - df_copy['shots.npxG/Sh'].min())
-    df_copy['n_Gls'] = (df_copy['shots.Gls'] - df_copy['shots.Gls'].min()) / (df_copy['shots.Gls'].max() - df_copy['shots.Gls'].min())
-    df_copy['n_Sh'] = (df_copy['shots.Sh/90'] - df_copy['shots.Sh/90'].min()) / (df_copy['shots.Sh/90'].max() - df_copy['shots.Sh/90'].min())
-    df_copy['n_OffKon'] = (df_copy['poss.Touches.Att 3rd'] - df_copy['poss.Touches.Att 3rd'].min()) / (df_copy['poss.Touches.Att 3rd'].max() - df_copy['poss.Touches.Att 3rd'].min())
-    df_copy['n_Ballbesitz'] = (df_copy['Poss'] - df_copy['Poss'].min()) / (df_copy['Poss'].max() - df_copy['Poss'].min())
-    df_copy['n_PgrPass'] = (df_copy['passing.PrgP/90'] - df_copy['passing.PrgP/90'].min()) / (df_copy['passing.PrgP/90'].max() - df_copy['passing.PrgP/90'].min())
-    df_copy['n_OffStd'] = (df_copy['creation.SCA Types.PassDead'] - df_copy['creation.SCA Types.PassDead'].min()) / (df_copy['creation.SCA Types.PassDead'].max() - df_copy['creation.SCA Types.PassDead'].min())
-    df_copy['n_Dribb'] = (df_copy['poss.Take-Ons.Succ'] - df_copy['poss.Take-Ons.Succ'].min()) / (df_copy['poss.Take-Ons.Succ'].max() - df_copy['poss.Take-Ons.Succ'].min())
-    
-    dnpxG = df_copy["n_npxG"].mean()
-    dGls = df_copy["n_Gls"].mean()
-    dSh = df_copy["n_Sh"].mean()
-    dOffKon = df_copy["n_OffKon"].mean()
-    dBallbesitz = df_copy["n_Ballbesitz"].mean()
-    dPgrPass = df_copy["n_PgrPass"].mean()
-    dOffStd = df_copy["n_OffStd"].mean()
-    dDribb =  df_copy["n_Dribb"].mean()
-    
-    df1 = pd.DataFrame(dict( # Teamwert
-        r = [Gls,Sh,npxG,OffKon,Ballbesitz,PgrPass,Dribb,OffStd,Gls],
-        theta = [f"Tore: {df_copy.at[i,'shots.Gls']}",
-                 f"Schüsse pro Spiel: {df_copy.at[i,'shots.Sh/90']}",
-                 f"xGoals pro Schuss: {df_copy.at[i,'shots.npxG/Sh']}%",
-                 f"Ballkontakte im letzten Drittel pro Spiel: {df_copy.at[i,'poss.Touches.Att 3rd']}",
-                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Prog. Pässe pro Spiel: {df_copy.at[i,'passing.PrgP/90']}",
-                 f"Erfolgreiche Dribblings: {df_copy.at[i,'poss.Take-Ons.Succ']}",
-                 f"Chancen nach Offensivstandards: {df_copy.at[i,'creation.SCA Types.PassDead']}",
-                 f"Tore: {df_copy.at[i,'shots.Gls']}"]))
-    
-    df2 = pd.DataFrame(dict( # Liga-Durchschnitt
-        r = [dGls,dSh,dnpxG,dOffKon,dBallbesitz,dPgrPass,dDribb,dOffStd,dGls],
-        theta = [f"Tore: {df_copy.at[i,'shots.Gls']}",
-                 f"Schüsse pro Spiel: {df_copy.at[i,'shots.Sh/90']}",
-                 f"xGoals pro Schuss: {df_copy.at[i,'shots.npxG/Sh']}%",
-                 f"Ballkontakte im letzten Drittel pro Spiel: {df_copy.at[i,'poss.Touches.Att 3rd']}",
-                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Prog. Pässe pro Spiel: {df_copy.at[i,'passing.PrgP/90']}",
-                 f"Erfolgreiche Dribblings: {df_copy.at[i,'poss.Take-Ons.Succ']}",
-                 f"Chancen nach Offensivstandards: {df_copy.at[i,'creation.SCA Types.PassDead']}",
-                 f"Tore: {df_copy.at[i,'shots.Gls']}"]))
-    
-    df1['Model'] = team
-    df2['Model'] = 'Ligadurchschnitt'
-    df = pd.concat([df1,df2], axis=0)
-    color_discrete_map = {
-    team: 'green',
-    'Ligadurchschnitt': 'gray',
-}
+    variables = ['shots.npxG/Sh',
+                 'poss.Touches.Att 3rd.pergame',
+                 'shots.Gls',
+                 'shots.Sh/90',
+                 'Poss',
+                 'passing.PrgP/90',
+                 'creation.SCA Types.PassDead',
+                 'poss.Take-Ons.Succ']
+    variables.append("Squad")
+    df_subset = df[variables]
 
-    fig = px.line_polar(df,r='r',color = 'Model',theta = 'theta',
-                        color_discrete_map=color_discrete_map,line_shape = "linear")
-    fig.update_traces(fill='toself',
-                      opacity=0.6,  # Set fill opacity
-                      line=dict(width=0),  # Set line opacity
-                      mode = 'lines')      
+    # Variablen umbenennen
+    df_subset.rename(columns = {
+        "shots.npxG/Sh":"xGoals pro Schuss",
+        "poss.Touches.Att 3rd.pergame":"Ballkontakte im letzten Drittel pro Spiel",
+        "shots.Gls":"Tore",
+        "shots.Sh/90":"Schüsse pro Spiel",
+        "Poss":"Ballbesitz (%)",
+        "passing.PrgP/90":"Progressive Pässe pro Spiel",
+        "creation.SCA Types.PassDead":"Chancen nach Offensivstandards",
+        "poss.Take-Ons.Succ":"Erfolgreiche Dribblings"
+    },inplace = True)
+
+    # Dieses subset ins long_format
+    df_long = pd.melt(df_subset,id_vars=["Squad"])
+    df_long["maxvalue"] = df_long.groupby(["variable"])['value'].transform("max")
+    df_long["minvalue"] = df_long.groupby(["variable"])['value'].transform("min")
+    df_long["average"] = df_long.groupby(["variable"])['value'].transform("mean")
+    df_long["normal"] = (df_long['value'] - df_long['minvalue']) / (df_long['maxvalue'] - df_long['minvalue'])
+    df_long["normalavg"] = df_long.groupby(["variable"])["normal"].transform("mean")
+    df_long["value"] = df_long["value"].round(0).astype(int)
+    df_long["Beschriftung"] = df_long["variable"].astype(str) + ": " + df_long["value"].astype(str)
+
+    df_long = df_long[df_long["Squad"] == team]
+    df_long.reset_index(drop = True,inplace = True)
+
+    # Plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r = df_long["normal"],
+        theta=df_long["Beschriftung"],
+        fill = 'toself',
+        name = df_long.loc[0,"Squad"],
+        fillcolor= "green"
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r = df_long["normalavg"],
+        theta=df_long["Beschriftung"],
+        fill = 'toself',
+        name = "Durchschnitt",
+        fillcolor= "gray"
+    ))
+    fig.update_traces(opacity=0.4,  # Set fill opacity
+                    line=dict(width=0),  # Set line opacity
+                    mode = 'lines')    
     fig.update_polars(bgcolor='white',
-                      gridshape = "linear",
-                      hole = 0,
-                      angularaxis = dict(
-                          gridcolor= "gray",
-                          griddash = "dot",
-                          linecolor = "black",
-                          linewidth = 0.5,
-                          ticks = ""),
-                      radialaxis = dict(
-                          color = "white",
-                          gridwidth = 0.1,
-                          dtick = 0.25,
-                          linecolor = "white",
-                          showline = False,
-                          ticks = ""
-                          ))                 
+                        gridshape = "linear",
+                        hole = 0,
+                        angularaxis = dict(
+                            gridcolor= "gray",
+                            griddash = "dot",
+                            linecolor = "black",
+                            linewidth = 0.5,
+                            ticks = ""),
+                        radialaxis = dict(
+                            color = "white",
+                            gridwidth = 0.1,
+                            dtick = 0.25,
+                            linecolor = "white",
+                            showline = False,
+                            ticks = ""
+                            ))                 
     fig.update_layout(template = "none",
-                      showlegend=False,
-                      dragmode = False,
-                      clickmode = "none",
-                      font = dict(size = 12,color = "black",family = "arial"),
-                      title = "",
-                      title_font_size=35,
-                      title_x=0,
-                      title_font_color = "black",
-                      polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
+                        showlegend=False,
+                        dragmode = False,
+                        clickmode = "none",
+                        font = dict(size = 12,color = "black",family = "arial"),
+                        title = "",
+                        title_font_size=35,
+                        title_x=0,
+                        title_font_color = "black",
+                        polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
+
     return fig
 #%%
 @st.cache_data
@@ -244,107 +125,186 @@ def radar_pass(df,team):
     team : Der Verein, für den der Plot erstellt werden soll (needs "")
 
     """
-    df_copy = df.copy()
-    df_copy['passing.Total.pergame'] = df_copy["passing.Total.Att"].div(df_copy['MP']).astype('int') #pro Spiel
-    df_copy['pt.Pass Types.Sw'] = df_copy['pt.Pass Types.Sw'].div(df_copy['MP']).round(1) #pro Spiel
-    df_copy['pt.Pass Types.Crs'] = df_copy['pt.Pass Types.Crs'].div(df_copy['MP']).round(1) #pro Spiel
-    df_copy['passing.PrgP'] = df_copy['passing.PrgP'].div(df_copy['MP']).round(1) #pro Spiel
-    i = df_copy[df_copy['Squad'] == team].index[0]
-    Pässe = (df_copy.at[i,"passing.Total.pergame"]-min(df_copy["passing.Total.pergame"]))/(max(df_copy["passing.Total.pergame"])-min(df_copy["passing.Total.pergame"]))
-    Passgenauigkeit = (df_copy.at[i,"passing.Total.Cmp%"]-min(df_copy["passing.Total.Cmp%"]))/(max(df_copy["passing.Total.Cmp%"])-min(df_copy["passing.Total.Cmp%"]))
-    ProgP = (df_copy.at[i,"passing.PrgP"]-min(df_copy["passing.PrgP"]))/(max(df_copy["passing.PrgP"])-min(df_copy["passing.PrgP"]))
-    TB = (df_copy.at[i,"pt.Pass Types.TB"]-min(df_copy["pt.Pass Types.TB"]))/(max(df_copy["pt.Pass Types.TB"])-min(df_copy["pt.Pass Types.TB"]))
-    Ballbesitz = (df_copy.at[i,"Poss"]-min(df_copy["Poss"]))/(max(df_copy["Poss"])-min(df_copy["Poss"]))
-    Flankenwechsel = (df_copy.at[i,"pt.Pass Types.Sw"]-min(df_copy["pt.Pass Types.Sw"]))/(max(df_copy["pt.Pass Types.Sw"])-min(df_copy["pt.Pass Types.Sw"]))
-    Flanken = (df_copy.at[i,"pt.Pass Types.Crs"]-min(df_copy["pt.Pass Types.Crs"]))/(max(df_copy["pt.Pass Types.Crs"])-min(df_copy["pt.Pass Types.Crs"]))
-    LangeB = (df_copy.at[i,"passing.LongPct"]-min(df_copy["passing.LongPct"]))/(max(df_copy["passing.LongPct"])-min(df_copy["passing.LongPct"]))
-    
-    df_copy['n_Pässe'] = (df_copy['passing.Total.pergame'] - df_copy['passing.Total.pergame'].min()) / (df_copy['passing.Total.pergame'].max() - df_copy['passing.Total.pergame'].min())
-    df_copy['n_Passgenauigkeit'] = (df_copy['passing.Total.Cmp%'] - df_copy['passing.Total.Cmp%'].min()) / (df_copy['passing.Total.Cmp%'].max() - df_copy['passing.Total.Cmp%'].min())
-    df_copy['n_ProgP'] = (df_copy['passing.PrgP'] - df_copy['passing.PrgP'].min()) / (df_copy['passing.PrgP'].max() - df_copy['passing.PrgP'].min())
-    df_copy['n_TB'] = (df_copy['pt.Pass Types.TB'] - df_copy['pt.Pass Types.TB'].min()) / (df_copy['pt.Pass Types.TB'].max() - df_copy['pt.Pass Types.TB'].min())
-    df_copy['n_Ballbesitz'] = (df_copy['Poss'] - df_copy['Poss'].min()) / (df_copy['Poss'].max() - df_copy['Poss'].min())
-    df_copy['n_Flankenwechsel'] = (df_copy['pt.Pass Types.Sw'] - df_copy['pt.Pass Types.Sw'].min()) / (df_copy['pt.Pass Types.Sw'].max() - df_copy['pt.Pass Types.Sw'].min())
-    df_copy['n_Flanken'] = (df_copy['pt.Pass Types.Crs'] - df_copy['pt.Pass Types.Crs'].min()) / (df_copy['pt.Pass Types.Crs'].max() - df_copy['pt.Pass Types.Crs'].min())
-    df_copy['n_LangeB'] = (df_copy['passing.LongPct'] - df_copy['passing.LongPct'].min()) / (df_copy['passing.LongPct'].max() - df_copy['passing.LongPct'].min())
-    
-    dPässe = df_copy["n_Pässe"].mean()
-    dPassgenauigkeit = df_copy["n_Passgenauigkeit"].mean()
-    dProgP = df_copy["n_ProgP"].mean()
-    dTB = df_copy["n_TB"].mean()
-    dBallbesitz = df_copy["n_Ballbesitz"].mean()
-    dFlankenwechsel = df_copy["n_Flankenwechsel"].mean()
-    dFlanken = df_copy["n_Flanken"].mean()
-    dLangeB =  df_copy["n_LangeB"].mean()
-    
-    df1 = pd.DataFrame(dict( # Teamwert
-        r = [Pässe,Ballbesitz,Passgenauigkeit,ProgP,TB,LangeB,Flankenwechsel,Flanken,Pässe],
-        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
-                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
-                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
-                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
-                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
-                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
-                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
-                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
-    
-    df2 = pd.DataFrame(dict( # Liga-Durchschnitt
-        r = [dPässe,dBallbesitz,dPassgenauigkeit,dProgP,dTB,dLangeB,dFlankenwechsel,dFlanken,dPässe],
-        theta = [f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}",
-                 f"Ballbesitz: {df_copy.at[i,'Poss']}%",
-                 f"Passquote: {df_copy.at[i,'passing.Total.Cmp%']}%",
-                 f"Progressive Pässe pro Spiel: {df_copy.at[i,'passing.PrgP']}", 
-                 f"Through Balls: {df_copy.at[i,'pt.Pass Types.TB']}",
-                 f"Anteil langer Bälle: {df_copy.at[i,'passing.LongPct']}%",
-                 f"Flankenwechsel pro Spiel: {df_copy.at[i,'pt.Pass Types.Sw']}",
-                 f"Flanken pro Spiel: {df_copy.at[i,'pt.Pass Types.Crs']}",
-                 f"Pässe pro Spiel: {df_copy.at[i,'passing.Total.pergame']}"]))
-    
-    df1['Model'] = team
-    df2['Model'] = 'Ligadurchschnitt'
-    df = pd.concat([df1,df2], axis=0)
-    color_discrete_map = {
-    team: 'green',
-    'Ligadurchschnitt': 'gray',
-}
+    variables = ['passing.Total.pergame',
+                'passing.Total.Cmp%',
+                'passing.PrgP.pergame',
+                'passing.LongPct',
+                'pt.Pass Types.TB',
+                'Poss',
+                'pt.Pass Types.Sw.pergame',
+                'pt.Pass Types.Crs.pergame']
+    variables.append("Squad")
+    df_subset = df[variables]
 
-    fig = px.line_polar(df,r='r',color = 'Model',theta = 'theta',
-                        color_discrete_map=color_discrete_map,line_shape = "linear")
-    fig.update_traces(fill='toself',
-                      opacity=0.6,  # Set fill opacity
-                      line=dict(width=0),  # Set line opacity
-                      mode = 'lines')      
+    # Variablen umbenennen
+    df_subset.rename(columns = {
+        "passing.Total.pergame":"Pässe pro Spiel",
+        "passing.Total.Cmp%":"Passquote",
+        "passing.PrgP.pergame":"Progressive Pässe pro Spiel",
+        "passing.LongPct":"Prozent Lange Bälle",
+        "Poss":"Ballbesitz (%)",
+        "pt.Pass Types.TB":"Through Balls",
+        "pt.Pass Types.Sw.pergame":"Flankenwechsel pro Spiel",
+        "pt.Pass Types.Crs.pergame":"Flanken pro Spiel"
+    },inplace = True)
+
+    # Dieses subset ins long_format
+    df_long = pd.melt(df_subset,id_vars=["Squad"])
+    df_long["maxvalue"] = df_long.groupby(["variable"])['value'].transform("max")
+    df_long["minvalue"] = df_long.groupby(["variable"])['value'].transform("min")
+    df_long["average"] = df_long.groupby(["variable"])['value'].transform("mean")
+    df_long["normal"] = (df_long['value'] - df_long['minvalue']) / (df_long['maxvalue'] - df_long['minvalue'])
+    df_long["normalavg"] = df_long.groupby(["variable"])["normal"].transform("mean")
+    df_long["value"] = df_long["value"].round(0).astype(int)
+    df_long["Beschriftung"] = df_long["variable"].astype(str) + ": " + df_long["value"].astype(str)
+
+    df_long = df_long[df_long["Squad"] == team]
+    df_long.reset_index(drop = True,inplace = True)
+
+    # Plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r = df_long["normal"],
+        theta=df_long["Beschriftung"],
+        fill = 'toself',
+        name = df_long.loc[0,"Squad"],
+        fillcolor= "green"
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r = df_long["normalavg"],
+        theta=df_long["Beschriftung"],
+        fill = 'toself',
+        name = "Durchschnitt",
+        fillcolor= "gray"
+    ))
+    fig.update_traces(opacity=0.4,  # Set fill opacity
+                    line=dict(width=0),  # Set line opacity
+                    mode = 'lines')    
     fig.update_polars(bgcolor='white',
-                      gridshape = "linear",
-                      hole = 0,
-                      angularaxis = dict(
-                          gridcolor= "gray",
-                          griddash = "dot",
-                          linecolor = "black",
-                          linewidth = 0.5,
-                          ticks = ""),
-                      radialaxis = dict(
-                          color = "white",
-                          gridwidth = 0.1,
-                          dtick = 0.25,
-                          linecolor = "white",
-                          showline = False,
-                          ticks = ""
-                          ))                 
+                        gridshape = "linear",
+                        hole = 0,
+                        angularaxis = dict(
+                            gridcolor= "gray",
+                            griddash = "dot",
+                            linecolor = "black",
+                            linewidth = 0.5,
+                            ticks = ""),
+                        radialaxis = dict(
+                            color = "white",
+                            gridwidth = 0.1,
+                            dtick = 0.25,
+                            linecolor = "white",
+                            showline = False,
+                            ticks = ""
+                            ))                 
     fig.update_layout(template = "none",
-                      showlegend=False,
-                      dragmode = False,
-                      clickmode = "none",
-                      font = dict(size = 12,color = "black",family = "arial"),
-                      title = "",
-                      title_font_size=35,
-                      title_x=0,
-                      title_font_color = "black",
-                      polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
+                        showlegend=False,
+                        dragmode = False,
+                        clickmode = "none",
+                        font = dict(size = 12,color = "black",family = "arial"),
+                        title = "",
+                        title_font_size=35,
+                        title_x=0,
+                        title_font_color = "black",
+                        polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
+
     return fig
 
+#%%
+@st.cache_data
+def radar_def(df,team):
+    """
+    Funktion, um Radar-Charts für jede Mannschaft zu erstellen
 
+    ----------
+    df : Datensatz
+    team : Der Verein, für den der Plot erstellt werden soll (needs "")
+
+    """
+    variables = ['GA',
+                'shots.ag.Sh/90',
+                'creation.ag.SCA Types.PassDead',
+                'poss.ag.Take-Ons.Succ',
+                'poss.ag.Touches.Att Pen',
+                'defense.Err',
+                'misc.Performance.Fls',
+                'misc.Aerial Duels.Won%']
+    variables.append("Squad")
+    df_subset = df[variables]
+
+    # Variablen umbenennen
+    df_subset.rename(columns = {
+        "GA":"Gegentore",
+        "shots.ag.Sh/90":"Gegn. Schüsse pro Spiel",
+        "creation.ag.SCA Types.PassDead":"Gegn. Chancen<br>nach Standards",
+        "poss.ag.Take-Ons.Succ":"Gegn. erfolgreiche Dribblings",
+        "poss.ag.Touches.Att Pen":"Gegn. Ballkontakte im<br>Strafraum pro Spiel",
+        "defense.Err":"Individuelle Fehler<br>vor gegn. Chance",
+        "misc.Performance.Fls":"Fouls",
+        "misc.Aerial Duels.Won%":"Gewonnene<br>Kopfballduelle (%)"
+    },inplace = True)
+
+    # Dieses subset ins long_format
+    df_long = pd.melt(df_subset,id_vars=["Squad"])
+    df_long["maxvalue"] = df_long.groupby(["variable"])['value'].transform("max")
+    df_long["minvalue"] = df_long.groupby(["variable"])['value'].transform("min")
+    df_long["average"] = df_long.groupby(["variable"])['value'].transform("mean")
+    df_long["normal"] = (df_long['value'] - df_long['minvalue']) / (df_long['maxvalue'] - df_long['minvalue'])
+    df_long["normalavg"] = df_long.groupby(["variable"])["normal"].transform("mean")
+    df_long["value"] = df_long["value"].round(0).astype(int)
+    df_long["Beschriftung"] = df_long["variable"].astype(str) + ": " + df_long["value"].astype(str)
+
+    df_long = df_long[df_long["Squad"] == team]
+    df_long.reset_index(drop = True,inplace = True)
+
+    # Plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r = df_long["normal"],
+        theta=df_long["Beschriftung"],
+        fill = 'toself',
+        name = df_long.loc[0,"Squad"],
+        fillcolor= "green"
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r = df_long["normalavg"],
+        theta=df_long["Beschriftung"],
+        fill = 'toself',
+        name = "Durchschnitt",
+        fillcolor= "gray"
+    ))
+    fig.update_traces(opacity=0.4,  # Set fill opacity
+                    line=dict(width=0),  # Set line opacity
+                    mode = 'lines')    
+    fig.update_polars(bgcolor='white',
+                        gridshape = "linear",
+                        hole = 0,
+                        angularaxis = dict(
+                            gridcolor= "gray",
+                            griddash = "dot",
+                            linecolor = "black",
+                            linewidth = 0.5,
+                            ticks = ""),
+                        radialaxis = dict(
+                            color = "white",
+                            gridwidth = 0.1,
+                            dtick = 0.25,
+                            linecolor = "white",
+                            showline = False,
+                            ticks = ""
+                            ))                 
+    fig.update_layout(template = "none",
+                        showlegend=False,
+                        dragmode = False,
+                        clickmode = "none",
+                        font = dict(size = 12,color = "black",family = "arial"),
+                        title = "",
+                        title_font_size=35,
+                        title_x=0,
+                        title_font_color = "black",
+                        polar = dict(radialaxis = dict(showticklabels = False,range=[-0.05,1.05])))
+
+    return fig
 #%% Dashboard
 st.subheader("Teamprofile",divider = "rainbow")
 option = st.selectbox("Wähle das Team, dessen Statistiken dargestellt werden sollen",options = df["Squad"].sort_values(),index = 5)
@@ -361,7 +321,7 @@ if auswahl == "Offensiv":
 if auswahl == "Passprofil":
     st.plotly_chart(radar_pass(df,df.loc[index,'Squad']),use_container_width=True)
 if auswahl == "Defensiv":
-    st.write("---- in Arbeit ----")
+    st.plotly_chart(radar_def(df,df.loc[index,'Squad']),use_container_width=True)
 if auswahl == "Gesamt":
     st.write("---- in Arbeit ----")
 if auswahl == "Hypothetisch":

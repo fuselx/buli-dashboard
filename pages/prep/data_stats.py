@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-
+#%% packages
 import streamlit as st
 import pandas as pd
 from PIL import Image
 import requests
 import io
 
+#%% Daten
 # Daten einlesen für Team-Stats
 @st.cache_data(ttl=3600*12)
 def load_data():
@@ -139,6 +140,11 @@ def load_data():
     df['defense.Tackles.Mid 3rd.Pct'] = df['defense.Tackles.Mid 3rd'].div(df['defense.Tackles.Tkl'])*100
     df['defense.Tackles.Att 3rd.Pct'] = df['defense.Tackles.Att 3rd'].div(df['defense.Tackles.Tkl'])*100
     df["passing.PrgP/90"] = df["passing.PrgP"].div(df["MP"]).round(1)
+    df['passing.Total.pergame'] = df["passing.Total.Att"].div(df['MP']).astype('int') #pro Spiel
+    df['pt.Pass Types.Sw.pergame'] = df['pt.Pass Types.Sw'].div(df['MP']).round(1) #pro Spiel
+    df['pt.Pass Types.Crs.pergame'] = df['pt.Pass Types.Crs'].div(df['MP']).round(1) #pro Spiel
+    df['passing.PrgP.pergame'] = df['passing.PrgP'].div(df['MP']).round(1) #pro Spiel
+    df['poss.Touches.Att 3rd.pergame'] = df['poss.Touches.Att 3rd'].div(df['MP']).round(1) #pro Spiel 
     return df
 
 df = load_data()
